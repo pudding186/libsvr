@@ -532,7 +532,7 @@ bool (file_log_flush)(HFILELOG log)
     }
 }
 
-void (file_log_option)(HFILELOG log, enum log_level lv, bool open_or_not)
+void file_log_option(HFILELOG log, enum log_level lv, bool open_or_not)
 {
     if (open_or_not)
     {
@@ -544,7 +544,7 @@ void (file_log_option)(HFILELOG log, enum log_level lv, bool open_or_not)
     }
 }
 
-bool (file_log_open_or_not)(HFILELOG log, enum log_level lv)
+bool file_log_open_or_not(HFILELOG log, enum log_level lv)
 {
     return ((log->log_flag & lv) != 0);
 }
