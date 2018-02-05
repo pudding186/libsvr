@@ -45,19 +45,15 @@ HCLIENTMYSQL create_client_mysql(const char *host, unsigned int port,
     client_mysql_ptr->result.record_set = 0;
     client_mysql_ptr->result.affect_row = 0;
 
-    //MYSQL* mysql_ptr = mysql_init(0);
     client_mysql_ptr->real_mysql = mysql_init(0);
     
 
-    //if (!mysql_ptr)
     if (!client_mysql_ptr->real_mysql)
     {
-        //destroy_client_mysql(mysql_ptr);
         destroy_client_mysql(client_mysql_ptr);
         return 0;
     }
 
-    //if (mysql_options(mysql_ptr, MYSQL_OPT_RECONNECT, &reconnect))
     if (mysql_options(client_mysql_ptr->real_mysql, MYSQL_OPT_RECONNECT, &reconnect))
     {
         if (err_info)
