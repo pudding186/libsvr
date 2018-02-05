@@ -1,6 +1,5 @@
 #include "../include/table_help.h"
 #include "../include/memory_pool.h"
-//#include <memory.h>
 #include <string.h>
 
 typedef struct st_int_key_group
