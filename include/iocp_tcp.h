@@ -79,7 +79,7 @@ extern unsigned short (iocp_tcp_get_local_port)(HSESSION socket);
 
 extern size_t (iocp_tcp_get_send_free_size)(HSESSION socket);
 
-extern void (iocp_tcp_set_send_control)(HSESSION socket, int pkg_size, int delay_time);
+extern bool (iocp_tcp_set_send_control)(HSESSION socket, int pkg_size, int delay_time);
 
 #ifdef  __cplusplus
 }

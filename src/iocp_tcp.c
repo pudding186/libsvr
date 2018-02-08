@@ -1998,9 +1998,18 @@ size_t iocp_tcp_get_send_free_size(HSESSION socket)
     return loop_cache_free_size(socket->send_loop_cache);
 }
 
-void iocp_tcp_set_send_control(HSESSION socket, int pkg_size, int delay_time)
+bool iocp_tcp_set_send_control(HSESSION socket, int pkg_size, int delay_time)
 {
-    socket->data_delay_send_size = pkg_size;
-    _mod_timer_send(socket, delay_time);
+    int no_delay = 1;
+    if (NO_ERROR == setsockopt(socket->socket, IPPROTO_TCP, 
+        TCP_NODELAY, (char*)&no_delay, sizeof(no_delay)))
+    {
+        socket->data_delay_send_size = pkg_size;
+        _mod_timer_send(socket, delay_time);
+
+        return true;
+    }
+
+    return false;
 }
 #endif
