@@ -27,8 +27,6 @@
 
 namespace SMemory
 {
-    extern void trace_alloc(const char* name, const char* file, int line, void* ptr, size_t size);
-
     struct construct_true{};
     struct construct_false{};
 
@@ -266,19 +264,21 @@ namespace SMemory
     }
 
     template <typename T>
-    T* TraceNew(size_t size, const char* file, int line)
-    {
-        T* ptr = get_class_memory<T>().New(size);
-        trace_alloc(get_class_memory<T>().Name(), file, line, ptr, size);
-    }
-
-    template <typename T>
     bool IsValidPtr(void* ptr)
     {
         return get_class_memory<T>().IsValidPtr(ptr);
     }
 
     extern void Delete(void* ptr);
+
+    extern void trace_alloc(const char* name, const char* file, int line, void* ptr, size_t size);
+
+    template <typename T>
+    T* TraceNew(size_t size, const char* file, int line)
+    {
+        T* ptr = get_class_memory<T>().New(size);
+        trace_alloc(get_class_memory<T>().Name(), file, line, ptr, size);
+    }
 
     extern void TraceDelete(void* ptr);
 
