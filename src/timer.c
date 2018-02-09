@@ -52,34 +52,6 @@ typedef struct st_timer_manager
     HMEMORYUNIT         timer_info_unit;
 }timer_manager;
 
-//static HMEMORYUNIT _get_timer_mgr_unit(void)
-//{
-//    static HMEMORYUNIT timer_mgr_unit = 0;
-//
-//    if (timer_mgr_unit)
-//    {
-//        return timer_mgr_unit;
-//    }
-//
-//    timer_mgr_unit = create_memory_unit(sizeof(struct timer_manager));
-//
-//    return timer_mgr_unit;
-//}
-//
-//static HMEMORYUNIT _get_timer_info_unit(void)
-//{
-//    static HMEMORYUNIT timer_info_unit = 0;
-//
-//    if (timer_info_unit)
-//    {
-//        return timer_info_unit;
-//    }
-//
-//    timer_info_unit = create_memory_unit(sizeof(struct timer_info));
-//
-//    return timer_info_unit;
-//}
-
 static __inline void INIT_LIST_HEAD(struct list_head *list)
 {
     list->next = list;
