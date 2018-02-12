@@ -711,7 +711,8 @@ void _iocp_tcp_socket_on_send(HSESSION socket, BOOL ret, DWORD trans_byte)
         trans_byte = 0;
         socket->iocp_send_data.wsa_buf.len = 0;
     }
-    else
+    
+    if (trans_byte)
     {
         if (!loop_cache_pop(socket->send_loop_cache, trans_byte))
         {
