@@ -81,7 +81,7 @@ HSHMINFO shm_get_info(HSHMMGR mgr, int key)
 	return 0;
 }
 
-void* shm_alloc(HSHMMGR mgr, int key, size_t size)
+void* shm_alloc(HSHMMGR mgr, int key, unsigned int size)
 {
     void* pTr = NULL;
     HANDLE hHandle = NULL;

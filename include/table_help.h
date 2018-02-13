@@ -37,7 +37,7 @@ extern size_t (quick_tree_node_value)(HRBNODE node, void*** value_arry);
 extern bool (tree_is_quick)(HRBTREE tree);
 
 extern void* (tree_find_int64)(HRBTREE tree, unsigned long long key);
-extern void* (tree_find_int)(HRBTREE tree, size_t key);
+extern void* (tree_find_int)(HRBTREE tree, unsigned long key);
 extern void* (tree_find_str)(HRBTREE tree, const char* key);
 
 extern void (add_col_info)(HRBTREE tree, const char* col_var_name, size_t col_var_offset, col_data_type col_var_type);

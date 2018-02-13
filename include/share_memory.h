@@ -15,7 +15,7 @@ extern void (destroy_shm_mgr)(HSHMMGR mgr);
 
 extern HSHMINFO(shm_get_info)(HSHMMGR mgr, int key);
 
-extern void* (shm_alloc)(HSHMMGR mgr, int key, size_t size);
+extern void* (shm_alloc)(HSHMMGR mgr, int key, unsigned int size);
 
 extern void (shm_free)(HSHMMGR mgr, int key);
 

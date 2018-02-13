@@ -211,7 +211,7 @@ public:
         m_shm_mgr = create_shm_mgr();
 
         size_t shm_size = sizeof(struct func_stack) + sizeof(size_t);
-        m_func_stack = (struct func_stack*)shm_alloc(m_shm_mgr, shm_key, shm_size);
+        m_func_stack = (struct func_stack*)shm_alloc(m_shm_mgr, shm_key, (unsigned int)shm_size);
         if (!m_func_stack)
         {
             return false;

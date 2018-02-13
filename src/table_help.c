@@ -56,7 +56,7 @@ void* tree_find_int64( HRBTREE tree, unsigned long long key )
     return 0;
 }
 
-void* tree_find_int(HRBTREE tree, size_t key)
+void* tree_find_int(HRBTREE tree, unsigned long key)
 {
     HRBNODE node = rb_tree_find_int(tree, key);
     if (node)

@@ -49,7 +49,7 @@ struct event_establish
 
 struct evt_data
 {
-    size_t data_len;
+    int data_len;
 };
 
 struct event_system_error
@@ -77,7 +77,7 @@ struct event_terminate
 struct net_event
 {
     struct iocp_tcp_socket*         socket;
-    size_t                          type;
+    int                             type;
     union
     {
         struct event_establish      evt_establish;
@@ -185,7 +185,7 @@ struct iocp_tcp_manager
     HMEMORYUNIT                 socket_pool;
     HRBTREE                     memory_mgr;
 
-    size_t                      max_socket_num;
+    int                         max_socket_num;
     int                         max_accept_ex_num;
 
     char*                       max_pkg_buf;
@@ -234,7 +234,7 @@ bool _iocp_tcp_socket_bind_iocp_port(HSESSION socket)
     return false;
 }
 
-void* _iocp_tcp_manager_alloc_memory(HNETMANAGER mgr, size_t buffer_size)
+void* _iocp_tcp_manager_alloc_memory(HNETMANAGER mgr, int buffer_size)
 {
     HMEMORYUNIT unit;
     HRBNODE memory_node = rb_tree_find_int(mgr->memory_mgr, buffer_size);
@@ -258,7 +258,7 @@ void* _iocp_tcp_manager_alloc_memory(HNETMANAGER mgr, size_t buffer_size)
     return memory_unit_alloc(unit, 4*1024);
 }
 
-void _iocp_tcp_manager_free_memory(HNETMANAGER mgr, void* mem, size_t buffer_size)
+void _iocp_tcp_manager_free_memory(HNETMANAGER mgr, void* mem, int buffer_size)
 {
     HRBNODE memory_node = rb_tree_find_int(mgr->memory_mgr, buffer_size);
 
@@ -275,7 +275,7 @@ void _iocp_tcp_manager_free_memory(HNETMANAGER mgr, void* mem, size_t buffer_siz
 
 extern HLOOPCACHE create_loop_cache_ex(size_t size, char* data);
 
-HSESSION _iocp_tcp_manager_alloc_socket(HNETMANAGER mgr, size_t recv_buf_size, size_t send_buf_size)
+HSESSION _iocp_tcp_manager_alloc_socket(HNETMANAGER mgr, int recv_buf_size, int send_buf_size)
 {
     HSESSION socket = 0;
 
@@ -316,18 +316,18 @@ HSESSION _iocp_tcp_manager_alloc_socket(HNETMANAGER mgr, size_t recv_buf_size, s
         }
         else
         {
-            if (loop_cache_size(socket->recv_loop_cache) != recv_buf_size)
+            if ((int)loop_cache_size(socket->recv_loop_cache) != recv_buf_size)
             {
                 SOCKET_LOCK;
-                _iocp_tcp_manager_free_memory(mgr, loop_cache_get_cache(socket->recv_loop_cache), loop_cache_size(socket->recv_loop_cache));
+                _iocp_tcp_manager_free_memory(mgr, loop_cache_get_cache(socket->recv_loop_cache), (int)loop_cache_size(socket->recv_loop_cache));
                 loop_cache_reset(socket->recv_loop_cache, recv_buf_size, (char*)_iocp_tcp_manager_alloc_memory(mgr, recv_buf_size));
                 SOCKET_UNLOCK;
             }
 
-            if (loop_cache_size(socket->send_loop_cache) != send_buf_size)
+            if ((int)loop_cache_size(socket->send_loop_cache) != send_buf_size)
             {
                 SOCKET_LOCK;
-                _iocp_tcp_manager_free_memory(mgr, loop_cache_get_cache(socket->send_loop_cache), loop_cache_size(socket->send_loop_cache));
+                _iocp_tcp_manager_free_memory(mgr, loop_cache_get_cache(socket->send_loop_cache), (int)loop_cache_size(socket->send_loop_cache));
                 loop_cache_reset(socket->send_loop_cache, send_buf_size, (char*)_iocp_tcp_manager_alloc_memory(mgr, send_buf_size));
                 SOCKET_UNLOCK;
             }
@@ -354,7 +354,7 @@ void _iocp_tcp_manager_free_socket(HNETMANAGER mgr, HSESSION socket)
 #define EVENT_LOCK EnterCriticalSection(&socket->mgr->evt_lock)
 #define EVENT_UNLOCK LeaveCriticalSection(&socket->mgr->evt_lock)
 
-void _push_data_event(HSESSION socket, size_t data_len)
+void _push_data_event(HSESSION socket, int data_len)
 {
     if (socket->state == SOCKET_STATE_ESTABLISH)
     {
@@ -575,7 +575,7 @@ bool _iocp_tcp_socket_post_recv(HSESSION socket)
     loop_cache_get_free(socket->recv_loop_cache, &recv_ptr, &recv_len);
 
     socket->iocp_recv_data.wsa_buf.buf = recv_ptr;
-    socket->iocp_recv_data.wsa_buf.len = recv_len;
+    socket->iocp_recv_data.wsa_buf.len = (ULONG)recv_len;
 
     ++socket->recv_req;
 
@@ -734,7 +734,7 @@ void _iocp_tcp_socket_on_send(HSESSION socket, BOOL ret, DWORD trans_byte)
         loop_cache_get_data(socket->send_loop_cache, &send_ptr, &send_len);
 
         socket->iocp_send_data.wsa_buf.buf = send_ptr;
-        socket->iocp_send_data.wsa_buf.len = send_len;
+        socket->iocp_send_data.wsa_buf.len = (ULONG)send_len;
 
         if (!_iocp_tcp_socket_post_send(socket))
         {
@@ -1869,7 +1869,7 @@ HLISTENER iocp_tcp_listen(HNETMANAGER mgr,
     return listener;
 }
 
-bool iocp_tcp_send(HSESSION socket, const char* data, size_t len)
+bool iocp_tcp_send(HSESSION socket, const char* data, int len)
 {
     if (len <= 0)
     {
@@ -1994,9 +1994,9 @@ unsigned short iocp_tcp_get_local_port(HSESSION socket)
     return socket->local_port;
 }
 
-size_t iocp_tcp_get_send_free_size(HSESSION socket)
+int iocp_tcp_get_send_free_size(HSESSION socket)
 {
-    return loop_cache_free_size(socket->send_loop_cache);
+    return (int)loop_cache_free_size(socket->send_loop_cache);
 }
 
 bool iocp_tcp_set_send_control(HSESSION socket, int pkg_size, int delay_time)

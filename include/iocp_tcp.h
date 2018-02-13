@@ -49,7 +49,7 @@ extern HLISTENER (iocp_tcp_listen)(HNETMANAGER mgr,
                                  int recv_buf_size, int send_buf_size, 
                                  pfn_parse_packet func, bool reuse_addr);
 
-extern bool (iocp_tcp_send)(HSESSION socket, const char* data, size_t len);
+extern bool (iocp_tcp_send)(HSESSION socket, const char* data, int len);
 
 extern void (iocp_tcp_close_session)(HSESSION socket);
 
@@ -77,7 +77,7 @@ extern unsigned int (iocp_tcp_get_local_ip)(HSESSION socket);
 
 extern unsigned short (iocp_tcp_get_local_port)(HSESSION socket);
 
-extern size_t (iocp_tcp_get_send_free_size)(HSESSION socket);
+extern int (iocp_tcp_get_send_free_size)(HSESSION socket);
 
 extern bool (iocp_tcp_set_send_control)(HSESSION socket, int pkg_size, int delay_time);
 
