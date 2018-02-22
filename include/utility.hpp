@@ -54,6 +54,9 @@ public:\
 extern int RandInt(int min, int max);
 extern long long RandInt64(long long min, long long max);
 
+extern unsigned int BKDRHash(const char* str);
+extern unsigned long long BKDRHash64(const char* str);
+
 //////////////////////////////////////////////////////////////////////////
 
 typedef class CFuncPerformanceMgr* HFUNCPERFMGR;

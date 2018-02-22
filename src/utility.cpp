@@ -114,6 +114,27 @@ long long RandInt(long long min, long long max)
     return min + rnd;
 }
 
+unsigned int BKDRHash(const char* str)
+{
+    unsigned int hash = 0;
+    while (*str)
+    {
+        hash = hash * 131 + (*str++);
+    }
+
+    return hash;
+}
+
+unsigned long long BKDRHash64(const char* str)
+{
+    unsigned long long hash = 0;
+    while (*str)
+    {
+        hash = hash * 131 + (*str++);
+    }
+
+    return hash;
+}
 
 //////////////////////////////////////////////////////////////////////////
 
