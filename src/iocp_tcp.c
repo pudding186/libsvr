@@ -925,12 +925,6 @@ void _iocp_tcp_socket_on_timer_close(HSESSION socket)
                 return;
             }
 
-            if (socket->timer_send)
-            {
-                timer_del(socket->timer_send);
-                socket->timer_send = 0;
-            }
-
             shutdown(socket->socket, SD_RECEIVE);
 
             socket->state = SOCKET_STATE_DELETE;
@@ -957,6 +951,12 @@ void _iocp_tcp_socket_on_timer_close(HSESSION socket)
 
 void _mod_timer_close(HSESSION socket, int elapse)
 {
+    if (socket->timer_send)
+    {
+        timer_del(socket->timer_send);
+        socket->timer_send = 0;
+    }
+
     if (socket->timer_close)
     {
         timer_mod(socket->timer_close, elapse, -1, socket);
@@ -1420,7 +1420,6 @@ bool _proc_net_event(HNETMANAGER mgr)
     case NET_EVENT_CONNECT_FAIL:
         {
             mgr->func_on_error(evt->socket, ERROR_CONNECT_FAIL, evt->evt_connect_fail.err_code);
-            _mod_timer_close(evt->socket, DELAY_CLOSE_SOCKET);
             evt->socket->state = SOCKET_STATE_TERMINATE;
 
             _mod_timer_close(evt->socket, DELAY_CLOSE_SOCKET);
@@ -2012,18 +2011,13 @@ int iocp_tcp_get_send_free_size(HSESSION socket)
     return (int)loop_cache_free_size(socket->send_loop_cache);
 }
 
-bool iocp_tcp_set_send_control(HSESSION socket, int pkg_size, int delay_time)
+void iocp_tcp_set_send_control(HSESSION socket, int pkg_size, int delay_time)
 {
     int no_delay = 1;
-    if (NO_ERROR == setsockopt(socket->socket, IPPROTO_TCP, 
-        TCP_NODELAY, (char*)&no_delay, sizeof(no_delay)))
-    {
-        socket->data_delay_send_size = pkg_size;
-        _mod_timer_send(socket, delay_time);
+    setsockopt(socket->socket, IPPROTO_TCP,
+        TCP_NODELAY, (char*)&no_delay, sizeof(no_delay));
 
-        return true;
-    }
-
-    return false;
+    socket->data_delay_send_size = pkg_size;
+    _mod_timer_send(socket, delay_time);
 }
 #endif
