@@ -9,11 +9,83 @@
 
 #pragma comment(lib, "winmm.lib")
 
-bool                g_local_time_run = false;
-unsigned            g_local_tick = 0;
-volatile time_t     g_local_time = 0;
-HANDLE              g_local_time_thread = 0;
-long                g_time_zone = 0;
+bool                    g_local_time_thread_run = false;
+bool                    g_local_time_run = false;
+volatile unsigned int   g_local_tick = 0;
+volatile time_t         g_local_time = 0;
+HANDLE                  g_local_time_thread = 0;
+long                    g_time_zone = 0;
+
+unsigned _stdcall local_time_proc(void* param)
+{
+    unsigned last_tick = 0;
+    param;
+
+    bool* local_time_thread_run = (bool*)param;
+
+    while (g_local_time_run)
+    {
+        g_local_tick = timeGetTime();
+
+        if (g_local_tick - last_tick > 1000)
+        {
+            last_tick = g_local_tick;
+            g_local_time = time(0);
+        }
+
+        timeBeginPeriod(1);
+        Sleep(1);
+        *local_time_thread_run = true;
+        timeEndPeriod(1);
+    }
+
+    *local_time_thread_run = false;
+
+    return 0;
+}
+
+bool init_local_time(void)
+{
+    if (g_local_time_thread)
+    {
+        return true;
+    }
+
+    unsigned thread_id = 0;
+    g_local_tick = timeGetTime();
+    g_local_time = time(0);
+    g_local_time_run = true;
+    _tzset();
+    _get_timezone(&g_time_zone);
+    g_local_time_thread = (HANDLE)_beginthreadex(0, 0, local_time_proc, &g_local_time_thread_run, 0, &thread_id);
+
+    if (!g_local_time_thread)
+    {
+        return false;
+    }
+
+    Sleep(10);
+
+    return true;
+}
+
+void uninit_local_time(void)
+{
+    if (g_local_time_thread)
+    {
+        g_local_time_run = false;
+
+        WaitForSingleObject(g_local_time_thread, INFINITE);
+
+        if (g_local_time_thread)
+        {
+            CloseHandle(g_local_time_thread);
+            g_local_time_thread = 0;
+        }
+    }
+}
+
+//////////////////////////////////////////////////////////////////////////
 
 #define TVN_BITS 6
 #define TVR_BITS 8
@@ -23,6 +95,7 @@ long                g_time_zone = 0;
 #define TVR_MASK (TVR_SIZE - 1)
 
 #define INDEX(N) ((mgr->last_tick >> (TVR_BITS + (N) * TVN_BITS)) & TVN_MASK)
+
 
 
 struct list_head {
@@ -183,26 +256,31 @@ HTIMERMANAGER create_timer_manager(pfn_on_timer func_on_timer)
 {
     int i = 0;
 
-    struct st_timer_manager* mgr = (struct st_timer_manager*)malloc(sizeof(struct st_timer_manager));
-    mgr->timer_info_unit = create_memory_unit(sizeof(struct st_timer_info));
-
-    for (i = 0; i < TVN_SIZE; i++)
+    if (init_local_time())
     {
-        INIT_LIST_HEAD(mgr->tv5+i);
-        INIT_LIST_HEAD(mgr->tv4+i);
-        INIT_LIST_HEAD(mgr->tv3+i);
-        INIT_LIST_HEAD(mgr->tv2+i);
+        struct st_timer_manager* mgr = (struct st_timer_manager*)malloc(sizeof(struct st_timer_manager));
+        mgr->timer_info_unit = create_memory_unit(sizeof(struct st_timer_info));
+
+        for (i = 0; i < TVN_SIZE; i++)
+        {
+            INIT_LIST_HEAD(mgr->tv5 + i);
+            INIT_LIST_HEAD(mgr->tv4 + i);
+            INIT_LIST_HEAD(mgr->tv3 + i);
+            INIT_LIST_HEAD(mgr->tv2 + i);
+        }
+
+        for (i = 0; i < TVR_SIZE; i++)
+        {
+            INIT_LIST_HEAD(mgr->tv1 + i);
+        }
+
+        mgr->func_on_timer = func_on_timer;
+        mgr->last_tick = get_tick();
+
+        return mgr;
     }
 
-    for (i = 0; i < TVR_SIZE; i++)
-    {
-        INIT_LIST_HEAD(mgr->tv1+i);
-    }
-
-    mgr->func_on_timer = func_on_timer;
-    mgr->last_tick = GetTickCount();
-
-    return mgr;
+    return 0;
 }
 
 void destroy_timer_manager(HTIMERMANAGER mgr)
@@ -213,6 +291,8 @@ void destroy_timer_manager(HTIMERMANAGER mgr)
     }
 
     free(mgr);
+
+    uninit_local_time();
 }
 
 HTIMERINFO timer_add(HTIMERMANAGER mgr, unsigned elapse, int count, void* data)
@@ -275,7 +355,7 @@ void timer_del(HTIMERINFO timer)
 
 bool timer_update(HTIMERMANAGER mgr, unsigned elapse)
 {
-    unsigned tick = GetTickCount();
+    unsigned tick = get_tick();
 
     bool is_time_out = false;
 
@@ -320,7 +400,7 @@ bool timer_update(HTIMERMANAGER mgr, unsigned elapse)
                 {
                     if (!is_time_out)
                     {
-                        if (GetTickCount() - tick > elapse)
+                        if (get_tick() - tick > elapse)
                         {
                             is_time_out = true;
                         }
@@ -329,7 +409,7 @@ bool timer_update(HTIMERMANAGER mgr, unsigned elapse)
 
                 if (is_time_out)
                 {
-                    info->expires = GetTickCount();
+                    info->expires = get_tick();
 
                     _add_timer(info);
                 }
@@ -410,58 +490,26 @@ time_t string_to_time(const char* time_string)
     return 0;
 }
 
-unsigned _stdcall local_time_proc(void* param)
+
+
+unsigned int get_tick(void)
 {
-    unsigned last_tick;
-    param;
-
-    while (g_local_time_run)
+    if (g_local_time_thread_run)
     {
-        last_tick = GetTickCount();
-
-        if (last_tick - g_local_tick > 1000)
-        {
-            g_local_tick = last_tick;
-            g_local_time = time(0);
-        }
-
-        Sleep(1);
+        return g_local_tick;
     }
 
-    return 0;
+    return timeGetTime();
 }
 
-bool init_local_time(void)
+time_t get_time(void)
 {
-    unsigned thread_id = 0;
-    g_local_tick = GetTickCount();
-    g_local_time = time(0);
-    g_local_time_run = true;
-    _tzset();
-    _get_timezone(&g_time_zone);
-    g_local_time_thread = (HANDLE)_beginthreadex(0, 0, local_time_proc, 0, 0, &thread_id);
-
-    if (!g_local_time_thread)
+    if (g_local_time_thread_run)
     {
-        return false;
+        return g_local_time;
     }
 
-    Sleep(10);
-
-    return true;
-}
-
-void uninit_local_time(void)
-{
-    g_local_time_run = false;
-
-    WaitForSingleObject(g_local_time_thread, INFINITE);
-
-    if (g_local_time_thread)
-    {
-        CloseHandle(g_local_time_thread);
-        g_local_time_thread = 0;
-    }
+    return time(0);
 }
 
 //返回从1970年1月1日0时0分0到现在经过的小时数(UTC 时间)
