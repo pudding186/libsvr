@@ -8,10 +8,6 @@ typedef struct st_timer_manager* HTIMERMANAGER;
 typedef struct st_timer_info* HTIMERINFO;
 typedef void (*pfn_on_timer)(HTIMERINFO timer);
 
-extern bool init_local_time(void);
-
-extern void uninit_local_time(void);
-
 extern HTIMERMANAGER (create_timer_manager)(pfn_on_timer func_on_timer);
 
 extern void (destroy_timer_manager)(HTIMERMANAGER mgr);
@@ -29,14 +25,14 @@ extern void* (timer_get_data)(HTIMERINFO timer);
 extern int (timer_remain_count)(HTIMERINFO timer);
 
 //////////////////////////////////////////////////////////////////////////
+extern unsigned int (get_tick)(void);
+extern time_t (get_time)(void);
+
+//////////////////////////////////////////////////////////////////////////
 // yyyy-mm-dd hh:mm:ss
 extern bool (time_to_string)(time_t time, char* str, size_t len);
 
 extern time_t (string_to_time)(const char* time_string);
-
-
-extern volatile time_t     g_local_time;
-extern long                g_time_zone;
 
 
 //返回从开机到现在的毫秒数
