@@ -366,9 +366,11 @@ void _push_data_event(HSESSION socket, int data_len)
 
         if (evt_len != sizeof(struct net_event))
         {
+#ifdef _DEBUG
             char sz_len[32];
             sprintf(sz_len, "len=%zu\n", evt_len);
             OutputDebugString(sz_len);
+#endif
             CRUSH_CODE;
         }
 
@@ -390,9 +392,11 @@ void _push_establish_event(HLISTENER listener, HSESSION socket)
 
     if (evt_len != sizeof(struct net_event))
     {
+#ifdef _DEBUG
         char sz_len[32];
         sprintf(sz_len, "len=%zu\n", evt_len);
         OutputDebugString(sz_len);
+#endif
         CRUSH_CODE;
     }
 
@@ -413,9 +417,11 @@ void _push_system_error_event(HSESSION socket, int err_code)
 
     if (evt_len != sizeof(struct net_event))
     {
+#ifdef _DEBUG
         char sz_len[32];
         sprintf(sz_len, "len=%zu\n", evt_len);
         OutputDebugString(sz_len);
+#endif
         CRUSH_CODE;
     }
 
@@ -436,9 +442,11 @@ void _push_module_error_event(HSESSION socket, int err_code)
 
     if (evt_len != sizeof(struct net_event))
     {
+#ifdef _DEBUG
         char sz_len[32];
         sprintf(sz_len, "len=%zu\n", evt_len);
         OutputDebugString(sz_len);
+#endif
         CRUSH_CODE;
     }
 
@@ -459,9 +467,11 @@ void _push_terminate_event(HSESSION socket)
 
     if (evt_len != sizeof(struct net_event))
     {
+#ifdef _DEBUG
         char sz_len[32];
         sprintf(sz_len, "len=%zu\n", evt_len);
         OutputDebugString(sz_len);
+#endif
         CRUSH_CODE;
     }
 
@@ -481,9 +491,11 @@ void _push_connect_fail_event(HSESSION socket, int err_code)
 
     if (evt_len != sizeof(struct net_event))
     {
+#ifdef _DEBUG
         char sz_len[32];
         sprintf(sz_len, "len=%zu\n", evt_len);
         OutputDebugString(sz_len);
+#endif
         CRUSH_CODE;
     }
 
@@ -506,9 +518,11 @@ void _push_recv_active_event(HSESSION socket)
 
         if (evt_len != sizeof(struct net_event))
         {
+#ifdef _DEBUG
             char sz_len[32];
             sprintf(sz_len, "len=%zu\n", evt_len);
             OutputDebugString(sz_len);
+#endif
             CRUSH_CODE;
         }
 
