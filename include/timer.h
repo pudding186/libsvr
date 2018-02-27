@@ -25,7 +25,10 @@ extern void* (timer_get_data)(HTIMERINFO timer);
 extern int (timer_remain_count)(HTIMERINFO timer);
 
 //////////////////////////////////////////////////////////////////////////
+//返回从开机到现在的毫秒数
 extern unsigned int (get_tick)(void);
+
+//返回从1970年1月1日0时0分0到现在经过的秒数(UTC 时间)
 extern time_t (get_time)(void);
 
 //////////////////////////////////////////////////////////////////////////
@@ -33,13 +36,6 @@ extern time_t (get_time)(void);
 extern bool (time_to_string)(time_t time, char* str, size_t len);
 
 extern time_t (string_to_time)(const char* time_string);
-
-
-//返回从开机到现在的毫秒数
-#define TIME_ZONE    g_time_zone
-
-//返回从1970年1月1日0时0分0到现在经过的秒数(UTC 时间)
-#define NOW_TIME    g_local_time
 
 //返回从1970年1月1日0时0分0到现在经过的小时数(UTC 时间)
 extern time_t now_hour(void);
