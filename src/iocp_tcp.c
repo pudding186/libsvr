@@ -43,74 +43,74 @@
 #define DELAY_CLOSE_SOCKET      15
 #define DELAY_SEND_CHECK        5
 
-struct event_establish 
+typedef struct st_event_establish 
 {
-    struct iocp_tcp_listener* listener;
-};
+    struct st_iocp_tcp_listener* listener;
+}event_establish;
 
-struct evt_data
+typedef struct st_evt_data
 {
     int data_len;
-};
+}evt_data;
 
-struct event_system_error
+typedef struct st_event_system_error
 {
     unsigned int err_code;
-};
+}event_system_error;
 
-struct event_module_error
+typedef struct st_event_module_error
 {
     unsigned int err_code;
-};
+}event_module_error;
 
-struct event_connect_fail
+typedef struct st_event_connect_fail
 {
     unsigned int err_code;
-};
+}event_connect_fail;
 
-struct event_terminate
+typedef struct st_event_terminate
 {
     struct iocp_tcp_socket* socket;
-};
+}event_terminate;
 
 #pragma warning( push )
 #pragma warning( disable : 4201 )
-struct net_event
+typedef struct st_net_event
 {
-    struct iocp_tcp_socket*         socket;
+    struct st_iocp_tcp_socket*      socket;
     int                             type;
     union
     {
-        struct event_establish      evt_establish;
-        struct evt_data             evt_data;
-        struct event_system_error   evt_system_error;
-        struct event_module_error   evt_module_error;
-        struct event_terminate      evt_terminate;
-        struct event_connect_fail   evt_connect_fail;
+        struct st_event_establish       evt_establish;
+        struct st_evt_data              evt_data;
+        struct st_event_system_error    evt_system_error;
+        struct st_event_module_error    evt_module_error;
+        struct st_event_terminate       evt_terminate;
+        struct st_event_connect_fail    evt_connect_fail;
     };
-};
+}net_event;
 
-struct iocp_data 
+typedef struct st_iocp_data
 {
     OVERLAPPED  over_lapped;
     WSABUF      wsa_buf;
     int         operation;
     union
     {
-        struct iocp_tcp_listener*   listener;
-        struct iocp_tcp_socket*     socket;
+        struct st_iocp_tcp_listener*    listener;
+        struct st_iocp_tcp_socket*      socket;
     };
-};
+}iocp_data;
 
 #pragma warning( pop )
 
-struct iocp_listen_data 
+typedef struct st_iocp_listen_data
 {
-    struct iocp_data            data;
-    SOCKET                      accept_socket;
-};
+    struct st_iocp_data data;
+    SOCKET              accept_socket;
+}iocp_listen_data;
 
-struct iocp_tcp_listener 
+typedef struct st_iocp_tcp_listener
 {
     SOCKET                      socket;
     int                         send_buf_size;
@@ -118,19 +118,19 @@ struct iocp_tcp_listener
     int                         max_accept_ex_num;
     pfn_parse_packet            pkg_parser;
     char*                       arry_addr_cache;
-    struct iocp_listen_data*    arry_iocp_data;
+    struct st_iocp_listen_data* arry_iocp_data;
     LONG                        state;
     void*                       user_data;
-    struct iocp_tcp_manager*    mgr;
-};
+    struct st_iocp_tcp_manager* mgr;
+}iocp_tcp_listener;
 
-struct iocp_tcp_socket 
+typedef struct st_iocp_tcp_socket
 {
     SOCKET                      socket;
     void*                       user_data;
 
-    struct iocp_data            iocp_recv_data;
-    struct iocp_data            iocp_send_data;
+    struct st_iocp_data            iocp_recv_data;
+    struct st_iocp_data            iocp_send_data;
 
     HLOOPCACHE                  recv_loop_cache;
     HLOOPCACHE                  send_loop_cache;
@@ -160,10 +160,10 @@ struct iocp_tcp_socket
     HTIMERINFO                  timer_close;
 
     pfn_parse_packet            pkg_parser;
-    struct iocp_tcp_manager*    mgr;
-};
+    struct st_iocp_tcp_manager*    mgr;
+}iocp_tcp_socket;
 
-struct iocp_tcp_manager 
+typedef struct st_iocp_tcp_manager
 {
     pfn_on_establish            func_on_establish;
     pfn_on_terminate            func_on_terminate;
@@ -193,11 +193,11 @@ struct iocp_tcp_manager
 
     char*                       max_pkg_buf;
     int                         max_pkg_buf_size;
-};
+}iocp_tcp_manager;
 
 /////////////////////////////////////////////////////////////////////////
 
-void _iocp_tcp_socket_reset(struct iocp_tcp_socket* socket)
+void _iocp_tcp_socket_reset(struct st_iocp_tcp_socket* socket)
 {
     socket->user_data = 0;
     socket->state = SOCKET_STATE_NONE;
@@ -364,13 +364,13 @@ void _push_data_event(HSESSION socket, int data_len)
 {
     if (socket->state == SOCKET_STATE_ESTABLISH)
     {
-        struct net_event* evt;
-        size_t evt_len = sizeof(struct net_event);
+        struct st_net_event* evt;
+        size_t evt_len = sizeof(struct st_net_event);
 
         EVENT_LOCK;
         loop_cache_get_free(socket->mgr->evt_queue, (char**)&evt, &evt_len);
 
-        if (evt_len != sizeof(struct net_event))
+        if (evt_len != sizeof(struct st_net_event))
         {
 #ifdef _DEBUG
             char sz_len[32];
@@ -391,12 +391,12 @@ void _push_data_event(HSESSION socket, int data_len)
 
 void _push_establish_event(HLISTENER listener, HSESSION socket)
 {
-    struct net_event* evt;
-    size_t evt_len = sizeof(struct net_event);
+    struct st_net_event* evt;
+    size_t evt_len = sizeof(struct st_net_event);
     EVENT_LOCK;
     loop_cache_get_free(socket->mgr->evt_queue, (char**)&evt, &evt_len);
 
-    if (evt_len != sizeof(struct net_event))
+    if (evt_len != sizeof(struct st_net_event))
     {
 #ifdef _DEBUG
         char sz_len[32];
@@ -416,12 +416,12 @@ void _push_establish_event(HLISTENER listener, HSESSION socket)
 
 void _push_system_error_event(HSESSION socket, int err_code)
 {
-    struct net_event* evt;
-    size_t evt_len = sizeof(struct net_event);
+    struct st_net_event* evt;
+    size_t evt_len = sizeof(struct st_net_event);
     EVENT_LOCK;
     loop_cache_get_free(socket->mgr->evt_queue, (char**)&evt, &evt_len);
 
-    if (evt_len != sizeof(struct net_event))
+    if (evt_len != sizeof(struct st_net_event))
     {
 #ifdef _DEBUG
         char sz_len[32];
@@ -441,12 +441,12 @@ void _push_system_error_event(HSESSION socket, int err_code)
 
 void _push_module_error_event(HSESSION socket, int err_code)
 {
-    struct net_event* evt;
-    size_t evt_len = sizeof(struct net_event);
+    struct st_net_event* evt;
+    size_t evt_len = sizeof(struct st_net_event);
     EVENT_LOCK;
     loop_cache_get_free(socket->mgr->evt_queue, (char**)&evt, &evt_len);
 
-    if (evt_len != sizeof(struct net_event))
+    if (evt_len != sizeof(struct st_net_event))
     {
 #ifdef _DEBUG
         char sz_len[32];
@@ -466,12 +466,12 @@ void _push_module_error_event(HSESSION socket, int err_code)
 
 void _push_terminate_event(HSESSION socket)
 {
-    struct net_event* evt;
-    size_t evt_len = sizeof(struct net_event);
+    struct st_net_event* evt;
+    size_t evt_len = sizeof(struct st_net_event);
     EVENT_LOCK;
     loop_cache_get_free(socket->mgr->evt_queue, (char**)&evt, &evt_len);
 
-    if (evt_len != sizeof(struct net_event))
+    if (evt_len != sizeof(struct st_net_event))
     {
 #ifdef _DEBUG
         char sz_len[32];
@@ -490,12 +490,12 @@ void _push_terminate_event(HSESSION socket)
 
 void _push_connect_fail_event(HSESSION socket, int err_code)
 {
-    struct net_event* evt;
-    size_t evt_len = sizeof(struct net_event);
+    struct st_net_event* evt;
+    size_t evt_len = sizeof(struct st_net_event);
     EVENT_LOCK;
     loop_cache_get_free(socket->mgr->evt_queue, (char**)&evt, &evt_len);
 
-    if (evt_len != sizeof(struct net_event))
+    if (evt_len != sizeof(struct st_net_event))
     {
 #ifdef _DEBUG
         char sz_len[32];
@@ -517,12 +517,12 @@ void _push_recv_active_event(HSESSION socket)
 {
     if (socket->state == SOCKET_STATE_ESTABLISH)
     {
-        struct net_event* evt;
-        size_t evt_len = sizeof(struct net_event);
+        struct st_net_event* evt;
+        size_t evt_len = sizeof(struct st_net_event);
         EVENT_LOCK;
         loop_cache_get_free(socket->mgr->evt_queue, (char**)&evt, &evt_len);
 
-        if (evt_len != sizeof(struct net_event))
+        if (evt_len != sizeof(struct st_net_event))
         {
 #ifdef _DEBUG
             char sz_len[32];
@@ -958,7 +958,7 @@ bool _iocp_tcp_listener_bind_iocp_port(HLISTENER listener)
     return false;
 }
 
-bool _iocp_tcp_listener_post_accept_ex(HLISTENER listener, struct iocp_listen_data* iocp_listen_data_ptr)
+bool _iocp_tcp_listener_post_accept_ex(HLISTENER listener, struct st_iocp_listen_data* iocp_listen_data_ptr)
 {
     DWORD bytes = 0;
 
@@ -1015,7 +1015,7 @@ ERROR_DEAL:
     return false;
 }
 
-void _iocp_tcp_listener_on_accept(HLISTENER listener, BOOL ret, struct iocp_listen_data* iocp_listen_data_ptr)
+void _iocp_tcp_listener_on_accept(HLISTENER listener, BOOL ret, struct st_iocp_listen_data* iocp_listen_data_ptr)
 {
     HSESSION socket;
 
@@ -1194,7 +1194,7 @@ bool _iocp_tcp_listener_listen(HLISTENER listener, int max_accept_ex_num, const 
         goto ERROR_DEAL;
     }
 
-    listener->arry_iocp_data = (struct iocp_listen_data*)malloc(sizeof(struct iocp_listen_data)*listener->max_accept_ex_num);
+    listener->arry_iocp_data = (struct st_iocp_listen_data*)malloc(sizeof(struct st_iocp_listen_data)*listener->max_accept_ex_num);
     if (!listener->arry_iocp_data)
     {
         goto ERROR_DEAL;
@@ -1232,12 +1232,12 @@ ERROR_DEAL:
 
 bool _proc_net_event(HNETMANAGER mgr)
 {
-    struct net_event* evt;
-    size_t evt_len = sizeof(struct net_event);
+    struct st_net_event* evt;
+    size_t evt_len = sizeof(struct st_net_event);
 
     loop_cache_get_data(mgr->evt_queue, (char**)&evt, &evt_len);
 
-    if (evt_len < sizeof(struct net_event))
+    if (evt_len < sizeof(struct st_net_event))
     {
         return false;
     }
@@ -1390,7 +1390,7 @@ bool _proc_net_event(HNETMANAGER mgr)
     break;
     }
 
-    if (!loop_cache_pop(mgr->evt_queue, sizeof(struct net_event)))
+    if (!loop_cache_pop(mgr->evt_queue, sizeof(struct st_net_event)))
     {
         CRUSH_CODE;
     }
@@ -1402,7 +1402,7 @@ unsigned WINAPI _iocp_thread_func(LPVOID param)
 {
     HNETMANAGER mgr = (HNETMANAGER)param;
 
-    struct iocp_data* iocp_data_ptr;
+    struct st_iocp_data* iocp_data_ptr;
     HSESSION iocp_tcp_socket_ptr;
     BOOL ret;
     DWORD byte_transferred;
@@ -1435,7 +1435,7 @@ unsigned WINAPI _iocp_thread_func(LPVOID param)
             break;
         case IOCP_OPT_ACCEPT:
         {
-            struct iocp_listen_data* iocp_listen_data_ptr = (struct iocp_listen_data*)iocp_data_ptr;
+            struct st_iocp_listen_data* iocp_listen_data_ptr = (struct st_iocp_listen_data*)iocp_data_ptr;
             _iocp_tcp_listener_on_accept(iocp_listen_data_ptr->data.listener, ret, iocp_listen_data_ptr);
         }
         break;
@@ -1798,7 +1798,7 @@ HNETMANAGER create_iocp_tcp(pfn_on_establish func_on_establish, pfn_on_terminate
 
     HSESSION* arry_socket_ptr = 0;
 
-    HNETMANAGER mgr = (HNETMANAGER)malloc(sizeof(struct iocp_tcp_manager));
+    HNETMANAGER mgr = (HNETMANAGER)malloc(sizeof(struct st_iocp_tcp_manager));
 
     mgr->max_socket_num = max_socket_num;
     mgr->work_thread_num = max_io_thread_num;
@@ -1831,7 +1831,7 @@ HNETMANAGER create_iocp_tcp(pfn_on_establish func_on_establish, pfn_on_terminate
         goto ERROR_DEAL;
     }
 
-    mgr->socket_pool = create_memory_unit(sizeof(struct iocp_tcp_socket));
+    mgr->socket_pool = create_memory_unit(sizeof(struct st_iocp_tcp_socket));
     if (!mgr->socket_pool)
     {
         goto ERROR_DEAL;
@@ -1858,7 +1858,7 @@ HNETMANAGER create_iocp_tcp(pfn_on_establish func_on_establish, pfn_on_terminate
     free(arry_socket_ptr);
     arry_socket_ptr = 0;
 
-    mgr->evt_queue = create_loop_cache(mgr->max_socket_num*5*sizeof(struct net_event), 0);
+    mgr->evt_queue = create_loop_cache(mgr->max_socket_num*5*sizeof(struct st_net_event), 0);
     if (!mgr->evt_queue)
     {
         goto ERROR_DEAL;
@@ -1947,7 +1947,7 @@ HLISTENER iocp_tcp_listen(HNETMANAGER mgr,
     const char* ip, unsigned short port, int recv_buf_size, int send_buf_size, 
     pfn_parse_packet func, bool reuse_addr)
 {
-    HLISTENER listener = (HLISTENER)malloc(sizeof(struct iocp_tcp_listener));
+    HLISTENER listener = (HLISTENER)malloc(sizeof(struct st_iocp_tcp_listener));
 
     listener->recv_buf_size = recv_buf_size;
     listener->send_buf_size = send_buf_size;
