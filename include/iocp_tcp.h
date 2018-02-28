@@ -17,9 +17,9 @@ extern "C" {
 #define ERROR_PACKET        -1
 #define ERROR_NONE          0
 
-typedef struct iocp_tcp_socket* HSESSION;
-typedef struct iocp_tcp_listener* HLISTENER;
-typedef struct iocp_tcp_manager* HNETMANAGER;
+typedef struct st_iocp_tcp_socket*      HSESSION;
+typedef struct st_iocp_tcp_listener*    HLISTENER;
+typedef struct st_iocp_tcp_manager*     HNETMANAGER;
 
 typedef int (*pfn_parse_packet)(HSESSION session, const char* data, const int len);
 
