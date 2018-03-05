@@ -27,7 +27,7 @@ typedef void * (*libsvr_alloc) (void *ud, void *ptr, size_t osize, size_t nsize)
 typedef ptrdiff_t(*key_cmp)(void*, void*);
 
 #ifndef __cplusplus
-#define bool unsigned char
+typedef unsigned char   bool;
 #define true 1
 #define false 0
 

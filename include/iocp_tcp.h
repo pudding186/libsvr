@@ -6,6 +6,8 @@
 #include <WinDef.h>
 #include <stddef.h>
 
+#include "./type_def.h"
+
 #ifdef  __cplusplus
 extern "C" {
 #endif
@@ -41,13 +43,13 @@ extern void (destroy_iocp_tcp)(HNETMANAGER mgr);
 extern HSESSION (iocp_tcp_connect)(HNETMANAGER mgr,
                                  const char* ip, unsigned short port, 
                                  int recv_buf_size, int send_buf_size, 
-                                 pfn_parse_packet func, int reuse_addr, 
+                                 pfn_parse_packet func, bool reuse_addr, 
                                  const char* bind_ip, unsigned short bind_port);
 
 extern HLISTENER (iocp_tcp_listen)(HNETMANAGER mgr,
                                  const char* ip, unsigned short port, 
                                  int recv_buf_size, int send_buf_size, 
-                                 pfn_parse_packet func, int reuse_addr);
+                                 pfn_parse_packet func, bool reuse_addr);
 
 extern bool (iocp_tcp_send)(HSESSION socket, const char* data, int len);
 
