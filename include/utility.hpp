@@ -97,7 +97,7 @@ extern CFuncPerformanceInfo* (FuncPerfFirst)(HFUNCPERFMGR mgr);
 
 extern void (FuncStackToFile)(HFUNCPERFMGR mgr, const char* file_path);
 
-#define FUNC_PERFORMANCE_CHECK(FUNC_PERF_MGR) \
-	__declspec(thread) static CFuncPerformanceInfo s_func_perf_info(__FUNCTION__, FUNC_PERF_MGR);\
+#define FUNC_PERFORMANCE_CHECK \
+	__declspec(thread) static CFuncPerformanceInfo s_func_perf_info(__FUNCTION__, def_func_perf_mgr());\
 	++ s_func_perf_info.hit_count;\
-	CFuncPerformanceCheck func_perf_check(&s_func_perf_info, FUNC_PERF_MGR);
+	CFuncPerformanceCheck func_perf_check(&s_func_perf_info, def_func_perf_mgr());
