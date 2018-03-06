@@ -19,7 +19,6 @@ long                    g_time_zone = 0;
 unsigned _stdcall local_time_proc(void* param)
 {
     unsigned last_tick = 0;
-    param;
 
     bool* local_time_thread_run = (bool*)param;
 
@@ -46,12 +45,13 @@ unsigned _stdcall local_time_proc(void* param)
 
 bool init_local_time(void)
 {
+    unsigned thread_id = 0;
+
     if (g_local_time_thread)
     {
         return true;
     }
 
-    unsigned thread_id = 0;
     g_local_tick = timeGetTime();
     g_local_time = time(0);
     g_local_time_run = true;
@@ -459,20 +459,16 @@ int timer_remain_count(HTIMERINFO timer)
     return timer->count;
 }
 
-bool time_to_string(time_t time, char* str, size_t len)
+const char* time_to_string(time_t time)
 {
-    if (len >= 20)
+    static char szBuf[128];
+    struct tm* pTm = localtime(&time);
+    if (pTm)
     {
-        struct tm* t_time = localtime(&time);
-
-        if (t_time)
-        {
-            strftime(str, len, "%Y-%m-%d %H:%M:%S", t_time);
-            return true;
-        }
+        strftime(szBuf, 128, "%Y-%m-%d %H:%M:%S", pTm);
+        return szBuf;
     }
-
-    return false;
+    return 0;
 }
 
 time_t string_to_time(const char* time_string)
