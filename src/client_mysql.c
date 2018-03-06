@@ -284,13 +284,15 @@ HCLIENTMYSQLRES client_mysql_get_result(HCLIENTMYSQL connection)
 
 HCLIENTMYSQLRES client_mysql_next_result(HCLIENTMYSQLRES last_result, unsigned int* client_mysql_errno)
 {
+    MYSQL* real_mysql = 0;
+
     if (!last_result)
     {
         *client_mysql_errno = 0;
         return 0;
     }
 
-    MYSQL* real_mysql = last_result->cur_mysql;
+    real_mysql = last_result->cur_mysql;
 
     if (last_result->record_set)
     {
