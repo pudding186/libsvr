@@ -33,7 +33,8 @@ extern time_t (get_time)(void);
 
 //////////////////////////////////////////////////////////////////////////
 // yyyy-mm-dd hh:mm:ss
-extern bool (time_to_string)(time_t time, char* str, size_t len);
+
+extern const char* time_to_string(time_t time);
 
 extern time_t (string_to_time)(const char* time_string);
 
