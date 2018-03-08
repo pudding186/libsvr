@@ -86,7 +86,7 @@ private:
     static const long long c2 = 3791;
 };
 
-int RandInt(int min, int max)
+int rand_int(int min, int max)
 {
     static RandomNumGenarator rnd_gen;
 
@@ -100,7 +100,7 @@ int RandInt(int min, int max)
     return min + rnd;
 }
 
-long long RandInt(long long min, long long max)
+long long rand_int64(long long min, long long max)
 {
     static RandomNumGenarator rnd_gen64;
 
@@ -168,6 +168,21 @@ public:
         return m_func_list;
     }
 
+    int StackTop(void)
+    {
+        return m_func_stack->m_top;
+    }
+
+    CFuncPerformanceInfo* StackFuncPerfInfo(int idx)
+    {
+        if (idx >= 0 && idx < m_func_stack->m_top)
+        {
+            return m_func_stack->m_stack[idx];
+        }
+
+        return 0;
+    }
+
     const char* UpdateStackInfo(void)
     {
         size_t stack_info_len = 0;
@@ -224,7 +239,7 @@ public:
 
         if (!shm_key)
         {
-            m_shm_key = RandInt(1, INT_MAX);
+            m_shm_key = rand_int(1, INT_MAX);
         }
         else
             m_shm_key = shm_key;
@@ -343,3 +358,21 @@ void FuncStackToFile(HFUNCPERFMGR mgr, const char* path)
 
     destroy_file_log(log);
 }
+
+__declspec(thread) CFuncPerformanceMgr* def_func_perf_mgr = 0;
+
+HFUNCPERFMGR DefFuncPerfMgr(void)
+{
+    return def_func_perf_mgr;
+}
+
+int GetFuncStackTop(HFUNCPERFMGR mgr)
+{
+    return mgr->StackTop();
+}
+
+CFuncPerformanceInfo* GetStackFuncPerfInfo(HFUNCPERFMGR mgr, int idx)
+{
+    return mgr->StackFuncPerfInfo(idx);
+}
+
