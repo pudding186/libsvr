@@ -434,6 +434,11 @@ bool (file_log_write)(HFILELOG log, enum log_level lv, const char* format, ...)
 
     va_list args;
 
+    if (!(log->log_flag & lv))
+    {
+        return false;
+    }
+
     if (loop_cache_pop_data(unit->rcy_que, (char*)&cmd, sizeof(log_cmd*)))
     {
         if (cmd->data_ext)
