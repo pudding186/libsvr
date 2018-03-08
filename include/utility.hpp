@@ -17,6 +17,18 @@ inline void StrSafeCopy(T& dst, const char* src) throw()
     }
 }
 
+template <typename T>
+inline void StrSafeCopy(T& Destination, const char* Source, size_t len)
+{
+    // Use cast to ensure that we only allow character arrays
+    (static_cast<char[sizeof(Destination)]>(Destination));
+    size_t size = sizeof(Destination);
+
+    size_t l = min(size - 1, len);
+    strncpy(Destination, Source, l);
+    Destination[l] = 0;
+}
+
 //////////////////////////////////////////////////////////////////////////
 #define DECLARE_SINGLETON(cls)\
 private:\
@@ -51,8 +63,8 @@ public:\
 
 //////////////////////////////////////////////////////////////////////////
 
-extern int RandInt(int min, int max);
-extern long long RandInt64(long long min, long long max);
+extern int rand_int(int min, int max);
+extern long long rand_int64(long long min, long long max);
 
 extern unsigned int BKDRHash(const char* str);
 extern unsigned long long BKDRHash64(const char* str);
@@ -90,14 +102,18 @@ protected:
 private:
 };
 
-extern HFUNCPERFMGR(CreateFuncPerfMgr)(int shm_key);
-extern void(DestroyFuncPerfMgr)(HFUNCPERFMGR mgr);
+extern HFUNCPERFMGR (CreateFuncPerfMgr)(int shm_key);
+extern void (DestroyFuncPerfMgr)(HFUNCPERFMGR mgr);
 extern const char* (GetFuncStackInfo)(HFUNCPERFMGR mgr);
 extern CFuncPerformanceInfo* (FuncPerfFirst)(HFUNCPERFMGR mgr);
+extern int (GetFuncStackTop)(HFUNCPERFMGR mgr);
+extern CFuncPerformanceInfo* (GetStackFuncPerfInfo)(HFUNCPERFMGR mgr, int idx);
+
+extern HFUNCPERFMGR (DefFuncPerfMgr)(void);
 
 extern void (FuncStackToFile)(HFUNCPERFMGR mgr, const char* file_path);
 
 #define FUNC_PERFORMANCE_CHECK \
-	__declspec(thread) static CFuncPerformanceInfo s_func_perf_info(__FUNCTION__, def_func_perf_mgr());\
+	__declspec(thread) static CFuncPerformanceInfo s_func_perf_info(__FUNCTION__, DefFuncPerfMgr());\
 	++ s_func_perf_info.hit_count;\
-	CFuncPerformanceCheck func_perf_check(&s_func_perf_info, def_func_perf_mgr());
+	CFuncPerformanceCheck func_perf_check(&s_func_perf_info, DefFuncPerfMgr());
