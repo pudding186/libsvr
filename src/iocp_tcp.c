@@ -69,7 +69,7 @@ typedef struct st_event_connect_fail
 
 typedef struct st_event_terminate
 {
-    struct iocp_tcp_socket* socket;
+    struct st_iocp_tcp_socket* socket;
 }event_terminate;
 
 #pragma warning( push )
@@ -702,6 +702,9 @@ bool _iocp_tcp_socket_post_send(HSESSION socket)
 
 void _iocp_tcp_socket_on_send(HSESSION socket, BOOL ret, DWORD trans_byte)
 {
+    char* send_ptr = 0;
+    size_t send_len = 0;
+
     if (!ret)
     {
         _iocp_tcp_socket_close(socket, ERROR_SYSTEM);
@@ -739,9 +742,6 @@ void _iocp_tcp_socket_on_send(HSESSION socket, BOOL ret, DWORD trans_byte)
             CRUSH_CODE;
         }
     }
-
-    char* send_ptr = 0;
-    size_t send_len = 0;
 
     loop_cache_get_data(socket->send_loop_cache, &send_ptr, &send_len);
 
@@ -2090,10 +2090,6 @@ int iocp_tcp_get_send_free_size(HSESSION socket)
 
 void iocp_tcp_set_send_control(HSESSION socket, int pkg_size, int delay_time)
 {
-    int no_delay = 1;
-    setsockopt(socket->socket, IPPROTO_TCP,
-        TCP_NODELAY, (char*)&no_delay, sizeof(no_delay));
-
     socket->data_delay_send_size = pkg_size;
     _mod_timer_send(socket, delay_time);
 }
