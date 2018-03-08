@@ -347,7 +347,9 @@ void* memory_pool_realloc(HMEMORYPOOL pool, void* old_mem, size_t mem_size)
             return new_mem;
         }
 
-        CRUSH_CODE;
+        {
+            CRUSH_CODE;
+        }
 
         return 0;
     }
@@ -374,7 +376,9 @@ void memory_pool_free(HMEMORYPOOL pool, void* mem)
         return;
     }
 
-    CRUSH_CODE;
+    {
+        CRUSH_CODE;
+    }
 }
 
 void memory_pool_set_grow(HMEMORYPOOL pool, size_t grow_size)
