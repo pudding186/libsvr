@@ -1,8 +1,10 @@
 #include <string>
 #include <typeinfo>
+#include <windows.h>
 #include "./data_def.h"
 #include "../include/rb_tree.h"
 #include "../include/smemory.hpp"
+#include "../include/utility.hpp"
 
 extern "C"
 {
@@ -26,6 +28,8 @@ extern "C"
     extern size_t sizeof_share_memory_info(void);
     extern size_t sizeof_share_mamory_mgr(void);
 }
+
+extern __declspec(thread) CFuncPerformanceMgr* def_func_perf_mgr;
 
 namespace SMemory
 {
@@ -295,10 +299,21 @@ namespace SMemory
         {
             def_shm_info_unit = create_memory_unit(sizeof_share_mamory_mgr());
         }
+
+        if (!def_func_perf_mgr)
+        {
+            def_func_perf_mgr = CreateFuncPerfMgr(GetCurrentThreadId());
+        }
     }
 
     IClassMemory::~IClassMemory(void)
     {
+        if (def_func_perf_mgr)
+        {
+            DestroyFuncPerfMgr(def_func_perf_mgr);
+            def_func_perf_mgr = 0;
+        }
+
         if (def_shm_info_unit)
         {
             destroy_memory_unit(def_shm_info_unit);
