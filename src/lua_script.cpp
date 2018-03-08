@@ -333,14 +333,14 @@ static void* mem_handler( void* ud, void* org_ptr, size_t org_size, size_t new_s
     if (!new_size)
     {
         //memory_pool_free((HMEMORYPOOL)ud, org_ptr);
-        default_memory_pool_free(org_ptr);
+        default_memory_manager_free(org_ptr);
         //free(org_ptr);
         return 0;
     }
     else
     {
         //return memory_pool_realloc((HMEMORYPOOL)ud, org_ptr, new_size);
-        return default_memory_pool_realloc(org_ptr, new_size);
+        return default_memory_manager_realloc(org_ptr, new_size);
         //return realloc(org_ptr, new_size);
     }
 }
@@ -772,10 +772,10 @@ void CLuaScript::close_lua(void)
 
 bool CLuaScript::_load_lua( const char* lua_data, size_t lua_data_size, const char* chunk_name)
 {
-    HRBTREE register_c_func_ptr_list = create_rb_tree(0,0,0);
-    HRBTREE unregister_c_func_name_list = create_rb_tree(0,0,0);
-    HRBTREE register_c_var_ptr_list = create_rb_tree(0,0,0);
-    HRBTREE require_lua_file_list = create_rb_tree(0,0,0);
+    HRBTREE register_c_func_ptr_list = create_rb_tree(0);
+    HRBTREE unregister_c_func_name_list = create_rb_tree(0);
+    HRBTREE register_c_var_ptr_list = create_rb_tree(0);
+    HRBTREE require_lua_file_list = create_rb_tree(0);
 
     lua_State* new_state = 0;
     bool load_ret = false;
@@ -840,7 +840,7 @@ bool CLuaScript::_load_lua( const char* lua_data, size_t lua_data_size, const ch
                     _scan_lua_data(data.decrypt_data, data.decrypt_data_size, 
                         register_c_func_ptr_list, unregister_c_func_name_list, register_c_var_ptr_list, require_lua_file_list);
                 }
-                default_memory_pool_free(lua_file);
+                default_memory_manager_free(lua_file);
 
                 reset_lua_life(LF);
 
@@ -861,7 +861,7 @@ bool CLuaScript::_load_lua( const char* lua_data, size_t lua_data_size, const ch
                     sprintf(err_msg, "脚本接口库中找不到 %s:%s", LUA_C_FUNC_FLAG, rb_node_key_str(unreg_func_name_node));
                     m_evt->on_error(this, err_msg, strlen(err_msg), e);
                 }
-                default_memory_pool_free((char*)rb_node_key_str(unreg_func_name_node));
+                default_memory_manager_free((char*)rb_node_key_str(unreg_func_name_node));
 
                 unreg_func_name_node = rb_next(unreg_func_name_node);
             }
@@ -1483,7 +1483,7 @@ void CLuaScript::_scan_c_functions( const char* lua_data, size_t lua_data_size, 
             else
             {
                 size_t func_len = strlen(p_func_begin);
-                char* unregister_func = (char*)default_memory_pool_alloc(func_len+1);
+                char* unregister_func = (char*)default_memory_manager_alloc(func_len+1);
                 memcpy(unregister_func, p_func_begin, func_len);
                 unregister_func[func_len] = 0;
                 rb_tree_insert_str(unregister_c_func_list, unregister_func, 0);
@@ -1660,7 +1660,7 @@ void CLuaScript::_scan_lua_require( const char* lua_data, size_t lua_data_size, 
             char new_tmp = *new_require_end;
             *(char*)new_require_end = 0;
 
-            char* require_path = (char*)default_memory_pool_alloc(512);
+            char* require_path = (char*)default_memory_manager_alloc(512);
             m_evt->on_require_lua_path(this, new_require_begin, require_path);
             rb_tree_insert_str(require_lua_list, require_path, 0);
 
