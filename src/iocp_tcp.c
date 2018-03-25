@@ -159,7 +159,7 @@ typedef struct st_iocp_tcp_socket
     HTIMERINFO                  timer_close;
 
     pfn_parse_packet            pkg_parser;
-    struct st_iocp_tcp_manager*    mgr;
+    struct st_iocp_tcp_manager* mgr;
 }iocp_tcp_socket;
 
 typedef struct st_iocp_tcp_manager
@@ -192,6 +192,24 @@ typedef struct st_iocp_tcp_manager
 
     char*                       max_pkg_buf;
     int                         max_pkg_buf_size;
+
+    //////////////////////////////////////////////////////////////////////////
+    unsigned long long          m_pop_connect_fail;
+    unsigned long long          m_pop_data;
+    unsigned long long          m_pop_establish;
+    unsigned long long          m_pop_module_error;
+    unsigned long long          m_pop_system_error;
+    unsigned long long          m_pop_recv_active;
+    unsigned long long          m_pop_terminate;
+
+    unsigned long long          m_push_connect_fail;
+    unsigned long long          m_push_data;
+    unsigned long long          m_push_establish;
+    unsigned long long          m_push_module_error;
+    unsigned long long          m_push_system_error;
+    unsigned long long          m_push_recv_active;
+    unsigned long long          m_push_terminate;
+
 }iocp_tcp_manager;
 
 /////////////////////////////////////////////////////////////////////////
@@ -356,6 +374,59 @@ void _iocp_tcp_manager_free_socket(HNETMANAGER mgr, HSESSION socket)
     SOCKET_UNLOCK;
 }
 
+void _log_evt(HNETMANAGER mgr, size_t evt_size)
+{
+    FILE* log = fopen("./net_event.log", "a");
+    fprintf(log, "============================\n");
+    fprintf(log,    "pop_connect_fail = %llu\n"
+                    "pop_data = %llu\n"
+                    "pop_establish = %llu\n"
+                    "pop_module_error = %llu\n"
+                    "pop_system_error = %llu\n"
+                    "pop_recv_active = %llu\n"
+                    "pop_terminate = %llu\n"
+                    "push_connect_fail = %llu\n"
+                    "push_data = %llu\n"
+                    "push_establish = %llu\n"
+                    "push_module_error = %llu\n"
+                    "push_system_error = %llu\n"
+                    "push_recv_active = %llu\n"
+                    "push_terminate = %llu\n"
+                    "undo_connect_fail = %llu\n"
+                    "undo_data = %llu\n"
+                    "undo_establish = %llu\n"
+                    "undo_module_error = %llu\n"
+                    "undo_system_error = %llu\n"
+                    "undo_recv_active = %llu\n"
+                    "undo_terminate = %llu\n",
+        mgr->m_pop_connect_fail,
+        mgr->m_pop_data,
+        mgr->m_pop_establish,
+        mgr->m_pop_module_error,
+        mgr->m_pop_system_error,
+        mgr->m_pop_recv_active,
+        mgr->m_pop_terminate,
+        mgr->m_push_connect_fail,
+        mgr->m_push_data,
+        mgr->m_push_establish,
+        mgr->m_push_module_error,
+        mgr->m_push_system_error,
+        mgr->m_push_recv_active,
+        mgr->m_push_terminate,
+        mgr->m_push_connect_fail - mgr->m_pop_connect_fail,
+        mgr->m_push_data - mgr->m_pop_data,
+        mgr->m_push_establish - mgr->m_pop_establish,
+        mgr->m_push_module_error - mgr->m_pop_module_error,
+        mgr->m_push_system_error - mgr->m_pop_system_error,
+        mgr->m_push_recv_active - mgr->m_pop_recv_active,
+        mgr->m_push_terminate - mgr->m_pop_terminate);
+    if (evt_size)
+    {
+        fprintf(log, "size = %zu \n", evt_size);
+    }
+    fclose(log);
+}
+
 #define EVENT_LOCK EnterCriticalSection(&socket->mgr->evt_lock)
 #define EVENT_UNLOCK LeaveCriticalSection(&socket->mgr->evt_lock)
 
@@ -371,11 +442,7 @@ void _push_data_event(HSESSION socket, int data_len)
 
         if (evt_len != sizeof(struct st_net_event))
         {
-#ifdef _DEBUG
-            char sz_len[32];
-            sprintf(sz_len, "len=%zu\n", evt_len);
-            OutputDebugString(sz_len);
-#endif
+            _log_evt(socket->mgr, evt_len);
             CRUSH_CODE;
         }
 
@@ -384,6 +451,7 @@ void _push_data_event(HSESSION socket, int data_len)
         evt->evt_data.data_len = data_len;
 
         loop_cache_push(socket->mgr->evt_queue, evt_len);
+        ++socket->mgr->m_push_data;
         EVENT_UNLOCK;
     }
 }
@@ -397,11 +465,7 @@ void _push_establish_event(HLISTENER listener, HSESSION socket)
 
     if (evt_len != sizeof(struct st_net_event))
     {
-#ifdef _DEBUG
-        char sz_len[32];
-        sprintf(sz_len, "len=%zu\n", evt_len);
-        OutputDebugString(sz_len);
-#endif
+        _log_evt(socket->mgr, evt_len);
         CRUSH_CODE;
     }
 
@@ -410,6 +474,7 @@ void _push_establish_event(HLISTENER listener, HSESSION socket)
     evt->evt_establish.listener = listener;
 
     loop_cache_push(socket->mgr->evt_queue, evt_len);
+    ++socket->mgr->m_push_establish;
     EVENT_UNLOCK;
 }
 
@@ -422,11 +487,7 @@ void _push_system_error_event(HSESSION socket, int err_code)
 
     if (evt_len != sizeof(struct st_net_event))
     {
-#ifdef _DEBUG
-        char sz_len[32];
-        sprintf(sz_len, "len=%zu\n", evt_len);
-        OutputDebugString(sz_len);
-#endif
+        _log_evt(socket->mgr, evt_len);
         CRUSH_CODE;
     }
 
@@ -435,6 +496,7 @@ void _push_system_error_event(HSESSION socket, int err_code)
     evt->evt_system_error.err_code = err_code;
 
     loop_cache_push(socket->mgr->evt_queue, evt_len);
+    ++socket->mgr->m_push_system_error;
     EVENT_UNLOCK;
 }
 
@@ -447,11 +509,7 @@ void _push_module_error_event(HSESSION socket, int err_code)
 
     if (evt_len != sizeof(struct st_net_event))
     {
-#ifdef _DEBUG
-        char sz_len[32];
-        sprintf(sz_len, "len=%zu\n", evt_len);
-        OutputDebugString(sz_len);
-#endif
+        _log_evt(socket->mgr, evt_len);
         CRUSH_CODE;
     }
 
@@ -460,6 +518,7 @@ void _push_module_error_event(HSESSION socket, int err_code)
     evt->evt_module_error.err_code = err_code;
 
     loop_cache_push(socket->mgr->evt_queue, evt_len);
+    ++socket->mgr->m_push_module_error;
     EVENT_UNLOCK;
 }
 
@@ -472,11 +531,7 @@ void _push_terminate_event(HSESSION socket)
 
     if (evt_len != sizeof(struct st_net_event))
     {
-#ifdef _DEBUG
-        char sz_len[32];
-        sprintf(sz_len, "len=%zu\n", evt_len);
-        OutputDebugString(sz_len);
-#endif
+        _log_evt(socket->mgr, evt_len);
         CRUSH_CODE;
     }
 
@@ -484,6 +539,7 @@ void _push_terminate_event(HSESSION socket)
     evt->type = NET_EVENT_TERMINATE;
 
     loop_cache_push(socket->mgr->evt_queue, evt_len);
+    ++socket->mgr->m_push_terminate;
     EVENT_UNLOCK;
 }
 
@@ -496,11 +552,7 @@ void _push_connect_fail_event(HSESSION socket, int err_code)
 
     if (evt_len != sizeof(struct st_net_event))
     {
-#ifdef _DEBUG
-        char sz_len[32];
-        sprintf(sz_len, "len=%zu\n", evt_len);
-        OutputDebugString(sz_len);
-#endif
+        _log_evt(socket->mgr, evt_len);
         CRUSH_CODE;
     }
 
@@ -509,6 +561,7 @@ void _push_connect_fail_event(HSESSION socket, int err_code)
     evt->evt_connect_fail.err_code = err_code;
 
     loop_cache_push(socket->mgr->evt_queue, evt_len);
+    ++socket->mgr->m_push_connect_fail;
     EVENT_UNLOCK;
 }
 
@@ -523,11 +576,7 @@ void _push_recv_active_event(HSESSION socket)
 
         if (evt_len != sizeof(struct st_net_event))
         {
-#ifdef _DEBUG
-            char sz_len[32];
-            sprintf(sz_len, "len=%zu\n", evt_len);
-            OutputDebugString(sz_len);
-#endif
+            _log_evt(socket->mgr, evt_len);
             CRUSH_CODE;
         }
 
@@ -535,6 +584,7 @@ void _push_recv_active_event(HSESSION socket)
         evt->type = NET_EVENT_RECV_ACTIVE;
 
         loop_cache_push(socket->mgr->evt_queue, evt_len);
+        ++socket->mgr->m_push_recv_active;
         EVENT_UNLOCK;
     }
 }
@@ -1250,6 +1300,8 @@ bool _proc_net_event(HNETMANAGER mgr)
     {
     case NET_EVENT_DATA:
     {
+        ++mgr->m_pop_data;
+
         char* data_ptr = 0;
         size_t data_len;
         int parser_len = 0;
@@ -1335,12 +1387,14 @@ bool _proc_net_event(HNETMANAGER mgr)
     break;
     case NET_EVENT_ESTABLISH:
     {
+        ++mgr->m_pop_establish;
         _mod_timer_send(evt->socket, DELAY_SEND_CHECK);
         mgr->func_on_establish(evt->evt_establish.listener, evt->socket);
     }
     break;
     case NET_EVENT_MODULE_ERROR:
     {
+        ++mgr->m_pop_module_error;
         mgr->func_on_error(evt->socket, evt->evt_module_error.err_code, 0);
         mgr->func_on_terminate(evt->socket);
 
@@ -1349,6 +1403,7 @@ bool _proc_net_event(HNETMANAGER mgr)
     break;
     case NET_EVENT_SYSTEM_ERROR:
     {
+        ++mgr->m_pop_system_error;
         mgr->func_on_error(evt->socket, ERROR_SYSTEM, evt->evt_system_error.err_code);
         mgr->func_on_terminate(evt->socket);
 
@@ -1357,12 +1412,14 @@ bool _proc_net_event(HNETMANAGER mgr)
     break;
     case NET_EVENT_TERMINATE:
     {
+        ++mgr->m_pop_terminate;
         mgr->func_on_terminate(evt->socket);
         _mod_timer_close(evt->socket, DELAY_CLOSE_SOCKET);
     }
     break;
     case NET_EVENT_CONNECT_FAIL:
     {
+        ++mgr->m_pop_connect_fail;
         mgr->func_on_error(evt->socket, ERROR_CONNECT_FAIL, evt->evt_connect_fail.err_code);
         evt->socket->state = SOCKET_STATE_TERMINATE;
 
@@ -1377,6 +1434,7 @@ bool _proc_net_event(HNETMANAGER mgr)
     //    break;
     case NET_EVENT_RECV_ACTIVE:
     {
+        ++mgr->m_pop_recv_active;
         if (loop_cache_free_size(evt->socket->recv_loop_cache))
         {
             _iocp_tcp_socket_post_recv_req(evt->socket);
@@ -1739,6 +1797,7 @@ bool _set_wsa_function(HNETMANAGER mgr)
 extern void destroy_rb_tree_ex(HRBTREE tree);
 void destroy_iocp_tcp(HNETMANAGER mgr)
 {
+    _log_evt(mgr, 0);
     _stop_iocp_thread(mgr);
 
     if (mgr->max_pkg_buf)
@@ -1807,6 +1866,24 @@ HNETMANAGER create_iocp_tcp(pfn_on_establish func_on_establish, pfn_on_terminate
     mgr->func_on_terminate = func_on_terminate;
     mgr->func_on_error = func_on_error;
     mgr->func_on_recv = func_on_recv;
+
+    mgr->m_pop_connect_fail = 0;
+    mgr->m_pop_data = 0;
+    mgr->m_pop_establish = 0;
+    mgr->m_pop_module_error = 0;
+    mgr->m_pop_system_error = 0;
+    mgr->m_pop_recv_active = 0;
+    mgr->m_pop_terminate = 0;
+
+    mgr->m_push_connect_fail = 0;
+    mgr->m_push_data = 0;
+    mgr->m_push_establish = 0;
+    mgr->m_push_module_error = 0;
+    mgr->m_push_system_error = 0;
+    mgr->m_push_recv_active = 0;
+    mgr->m_push_terminate = 0;
+
+
 
     InitializeCriticalSection(&mgr->evt_lock);
     InitializeCriticalSection(&mgr->socket_lock);
