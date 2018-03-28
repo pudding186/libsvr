@@ -403,7 +403,9 @@ public:
     {
         size_t stack_info_len = 0;
 
-        for (int i = 0; i < m_func_stack->m_top; i++)
+        m_stack_info[0] = '\0';
+
+        for (int i = m_func_stack->m_top; i > 0; i--)
         {
 #ifdef WIN32
             _snprintf_s(m_stack_info + stack_info_len, sizeof(m_stack_info) - stack_info_len, _TRUNCATE, "call %s()\n", m_func_stack->m_stack[i]->func_name);
@@ -411,9 +413,10 @@ public:
             snprintf(m_stack_info + stack_info_len, sizeof(m_stack_info) - stack_info_len, "call %s()\n", m_func_stack->m_stack[i]->func_name);
 #endif
             stack_info_len = strnlen(m_stack_info, sizeof(m_stack_info));
-        }
 
-        m_stack_info[stack_info_len - 1] = '\0';
+            m_stack_info[stack_info_len - 1] = '\0';
+        }
+        
 
         return m_stack_info;
     }
@@ -566,31 +569,30 @@ CFuncPerformanceInfo* FuncPerfFirst(HFUNCPERFMGR mgr)
     return mgr->FuncPerfFirst();
 }
 
+extern "C"
+{
+    extern bool _mk_dir(const char* dir);
+}
+
 void FuncStackToFile(HFUNCPERFMGR mgr, const char* path)
 {
-    char file_full_path[MAX_PATH];
     struct tm st_cur_time;
     time_t cur_time = time(0);
     st_cur_time = *localtime(&cur_time);
 
-    if (mk_dir(path))
+    if (_mk_dir(path))
     {
-        snprintf(file_full_path, sizeof(file_full_path), "%s/%s_%04d-%02d-%02d.txt",
-            path, "call_stack", st_cur_time.tm_year + 1900, st_cur_time.tm_mon + 1,
-            st_cur_time.tm_mday);
-        FILE* stack_file = fopen(file_full_path, "a");
+        char stack_file_full_path[512];
+        snprintf(stack_file_full_path, sizeof(stack_file_full_path),
+            "%s/stack_%04d_%02d_%02d_%02d_%02d_%02d.log", path,
+            st_cur_time.tm_year + 1900, st_cur_time.tm_mon + 1, st_cur_time.tm_mday,
+            st_cur_time.tm_hour, st_cur_time.tm_min, st_cur_time.tm_sec);
+
+        FILE* stack_file = fopen(stack_file_full_path, "a");
 
         if (stack_file)
         {
-            fprintf(stack_file, "%04d-%02d-%02d %02d:%02d:%02d *******call stack*******\r\n",
-                st_cur_time.tm_year + 1900, st_cur_time.tm_mon + 1, st_cur_time.tm_mday,
-                st_cur_time.tm_hour, st_cur_time.tm_min, st_cur_time.tm_sec);
-
-            fprintf(stack_file, "%04d-%02d-%02d %02d:%02d:%02d %s",
-                st_cur_time.tm_year + 1900, st_cur_time.tm_mon + 1, st_cur_time.tm_mday,
-                st_cur_time.tm_hour, st_cur_time.tm_min, st_cur_time.tm_sec,
-                mgr->UpdateStackInfo());
-
+            fprintf(stack_file, "****** call stack ******\r\n%s\r\n", mgr->UpdateStackInfo());
             fclose(stack_file);
         }
     }

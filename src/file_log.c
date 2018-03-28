@@ -95,7 +95,7 @@ static unsigned int _stdcall _log_thread_func(void* arg)
     return 0;
 }
 
-static bool _mk_dir(const char* dir)
+bool _mk_dir(const char* dir)
 {
     size_t i;
     char* p1;
