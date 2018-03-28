@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <string.h>
+#include "../include/smemory.hpp"
 #include "../include/utility.hpp"
 #include "../include/share_memory.h"
 #include "../include/file_log.h"
@@ -135,6 +136,221 @@ unsigned long long BKDRHash64(const char* str)
 
     return hash;
 }
+
+//////////////////////////////////////////////////////////////////////////
+
+//const char* memnmem(const char* mem1, int len1, const char* mem2, int len2)
+//{
+//    int n;
+//
+//    if (!len2)
+//    {
+//        return 0;
+//    }
+//
+//    if (len2 > len1)
+//    {
+//        return 0;
+//    }
+//
+//    while (len1)
+//    {
+//        for (n = 0; *(mem1 + n) == *(mem2 + n); n++)
+//        {
+//            if ((n + 1) == len2)
+//            {
+//                return mem1;
+//            }
+//        }
+//
+//        mem1++;
+//        len1--;
+//    }
+//
+//    return 0;
+//}
+
+//data_fragment_array split_data_to_fragment(const char* data, int len, const char* spliter, int spliter_len)
+//{
+//    const char* pStart = data;
+//    const char* pPos;
+//    const char* end = data + len;
+//
+//    int alloc_frg_size = 256;
+//    data_fragment_array frag_array;
+//
+//    frag_array.count = 0;
+//    frag_array.fragments = (data_fragment*)default_memory_manager_alloc(sizeof(data_fragment)*alloc_frg_size);
+//
+//
+//    pPos = memnmem(pStart, len, spliter, spliter_len);
+//
+//    while (pPos)
+//    {
+//        if (pPos >= pStart)
+//        {
+//            frag_array.fragments[frag_array.count].str = pStart;
+//            frag_array.fragments[frag_array.count].length = (int)(pPos - pStart);
+//            frag_array.count++;
+//
+//            if (frag_array.count > alloc_frg_size)
+//            {
+//                alloc_frg_size += 256;
+//                frag_array.fragments = (data_fragment*)default_memory_manager_realloc(frag_array.fragments, sizeof(data_fragment)*alloc_frg_size);
+//            }
+//        }
+//
+//        pStart = pPos + spliter_len;
+//        pPos = memnmem(pStart, (int)(end - pStart), spliter, spliter_len);
+//    }
+//
+//    if (pStart < end)
+//    {
+//        frag_array.fragments[frag_array.count].str = pStart;
+//        frag_array.fragments[frag_array.count].length = (int)(pPos - pStart);
+//        frag_array.count++;
+//
+//        if (frag_array.count > alloc_frg_size)
+//        {
+//            alloc_frg_size += 256;
+//            frag_array.fragments = (data_fragment*)default_memory_manager_realloc(frag_array.fragments, sizeof(data_fragment)*alloc_frg_size);
+//        }
+//    }
+//
+//    return frag_array;
+//}
+
+//data_fragment_array split_str_to_fragment(const char* data, int len, const char* spliter, int spliter_len)
+//{
+//    char* new_str = (char*)default_memory_manager_alloc(len + 1);
+//    memcpy(new_str, data, len);
+//    new_str[len] = 0;
+//
+//    char* pStart = new_str;
+//    char* pPos;
+//    char* end = new_str + len;
+//
+//    int alloc_frg_size = 256;
+//    data_fragment_array frag_array;
+//
+//    frag_array.count = 0;
+//    frag_array.fragments = (data_fragment*)default_memory_manager_alloc(sizeof(data_fragment)*alloc_frg_size);
+//
+//    pPos = (char*)memnmem(pStart, len, spliter, spliter_len);
+//
+//    while (pPos)
+//    {
+//        if (pPos >= pStart)
+//        {
+//            frag_array.fragments[frag_array.count].str = pStart;
+//            frag_array.fragments[frag_array.count].length = (int)(pPos - pStart);
+//            frag_array.count++;
+//
+//            if (frag_array.count > alloc_frg_size)
+//            {
+//                alloc_frg_size += 256;
+//                frag_array.fragments = (data_fragment*)default_memory_manager_realloc(frag_array.fragments, sizeof(data_fragment)*alloc_frg_size);
+//            }
+//        }
+//
+//        *pPos = 0;
+//
+//        pStart = pPos + spliter_len;
+//        pPos = (char*)memnmem(pStart, (int)(end - pStart), spliter, spliter_len);
+//    }
+//
+//    if (pStart < end)
+//    {
+//        frag_array.fragments[frag_array.count].str = pStart;
+//        frag_array.fragments[frag_array.count].length = (int)(pPos - pStart);
+//        frag_array.count++;
+//
+//        if (frag_array.count > alloc_frg_size)
+//        {
+//            alloc_frg_size += 256;
+//            frag_array.fragments = (data_fragment*)default_memory_manager_realloc(frag_array.fragments, sizeof(data_fragment)*alloc_frg_size);
+//        }
+//    }
+//
+//    return frag_array;
+//}
+//
+//void free_data_fragment_array(data_fragment_array frag_array)
+//{
+//    if (frag_array.fragments)
+//    {
+//        default_memory_manager_free(frag_array.fragments);
+//    }
+//}
+
+str_fragment_array* split_str_to_fragment(const char* str, int str_len, const char* spliter, int spliter_len)
+{
+    int alloc_str_fragment_count = 256;
+
+    char* ptr = (char*)default_memory_manager_alloc(sizeof(str_fragment_array) + str_len + 1);
+    str_fragment_array* frag_array = (str_fragment_array*)ptr;
+    frag_array->copy_string = (char*)(ptr + sizeof(str_fragment_array));
+    memcpy(frag_array->copy_string, str, str_len);
+    frag_array->copy_string[str_len] = 0;
+
+    frag_array->fragments_count = 0;
+    frag_array->fragments = (str_fragment*)default_memory_manager_alloc(
+        sizeof(str_fragment)*alloc_str_fragment_count);
+
+    char* pStart = frag_array->copy_string;
+    char* pPos;
+    char* end = frag_array->copy_string + str_len;
+
+    pPos = strstr(pStart, spliter);
+
+    while (pPos)
+    {
+        if (pPos > pStart)
+        {
+            frag_array->fragments[frag_array->fragments_count].frag_str = pStart;
+            frag_array->fragments[frag_array->fragments_count].frag_str_len = (int)(pPos - pStart);
+            frag_array->fragments_count++;
+        }
+        else if (pPos == pStart)
+        {
+            frag_array->fragments[frag_array->fragments_count].frag_str = 0;
+            frag_array->fragments[frag_array->fragments_count].frag_str_len = 0;
+            frag_array->fragments_count++;
+        }
+
+        if (frag_array->fragments_count >= alloc_str_fragment_count)
+        {
+            alloc_str_fragment_count += 256;
+            frag_array->fragments = (str_fragment*)default_memory_manager_realloc(
+                frag_array->fragments, sizeof(str_fragment)*alloc_str_fragment_count);
+        }
+
+        *pPos = 0;
+        pStart = pPos + spliter_len;
+        pPos = strstr(pStart, spliter);
+    }
+
+    if (pStart < end)
+    {
+        frag_array->fragments[frag_array->fragments_count].frag_str = pStart;
+        frag_array->fragments[frag_array->fragments_count].frag_str_len = (int)(end - pStart);
+        frag_array->fragments_count++;
+    }
+
+    return frag_array;
+}
+
+void free_str_fragment_array(str_fragment_array* array)
+{
+    if (array->fragments)
+    {
+        default_memory_manager_free(array->fragments);
+        array->fragments = 0;
+    }
+
+    default_memory_manager_free(array);
+}
+
 
 //////////////////////////////////////////////////////////////////////////
 
@@ -352,11 +568,32 @@ CFuncPerformanceInfo* FuncPerfFirst(HFUNCPERFMGR mgr)
 
 void FuncStackToFile(HFUNCPERFMGR mgr, const char* path)
 {
-    HFILELOG log = create_file_log(path, "call_stack");
+    char file_full_path[MAX_PATH];
+    struct tm st_cur_time;
+    time_t cur_time = time(0);
+    st_cur_time = *localtime(&cur_time);
 
-    file_log_write(log, log_sys, "%s", mgr->UpdateStackInfo());
+    if (mk_dir(path))
+    {
+        snprintf(file_full_path, sizeof(file_full_path), "%s/%s_%04d-%02d-%02d.txt",
+            path, "call_stack", st_cur_time.tm_year + 1900, st_cur_time.tm_mon + 1,
+            st_cur_time.tm_mday);
+        FILE* stack_file = fopen(file_full_path, "a");
 
-    destroy_file_log(log);
+        if (stack_file)
+        {
+            fprintf(stack_file, "%04d-%02d-%02d %02d:%02d:%02d *******call stack*******\r\n",
+                st_cur_time.tm_year + 1900, st_cur_time.tm_mon + 1, st_cur_time.tm_mday,
+                st_cur_time.tm_hour, st_cur_time.tm_min, st_cur_time.tm_sec);
+
+            fprintf(stack_file, "%04d-%02d-%02d %02d:%02d:%02d %s",
+                st_cur_time.tm_year + 1900, st_cur_time.tm_mon + 1, st_cur_time.tm_mday,
+                st_cur_time.tm_hour, st_cur_time.tm_min, st_cur_time.tm_sec,
+                mgr->UpdateStackInfo());
+
+            fclose(stack_file);
+        }
+    }
 }
 
 __declspec(thread) CFuncPerformanceMgr* def_func_perf_mgr = 0;

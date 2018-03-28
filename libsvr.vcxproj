@@ -22,7 +22,7 @@
     <ProjectGuid>{70514917-AE4F-49AB-821A-30B3C15216F9}</ProjectGuid>
     <RootNamespace>libsvr</RootNamespace>
     <Keyword>Win32Proj</Keyword>
-    <WindowsTargetPlatformVersion>10.0.16299.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.15063.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
@@ -162,6 +162,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\avl_tree.c" />
+    <ClCompile Include="src\base64.c" />
     <ClCompile Include="src\char_buffer.c" />
     <ClCompile Include="src\client_mysql.c" />
     <ClCompile Include="src\file_help.c" />
@@ -183,6 +184,10 @@
       <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Level4</WarningLevel>
     </ClCompile>
     <ClCompile Include="src\share_memory.c" />
+    <ClCompile Include="src\sha_1.c">
+      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsC</CompileAs>
+      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CompileAsC</CompileAs>
+    </ClCompile>
     <ClCompile Include="src\smemory.cpp">
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">CompileAsCpp</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">CompileAsCpp</CompileAs>
@@ -195,6 +200,7 @@
     <ClCompile Include="src\utility.cpp">
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Default</CompileAs>
     </ClCompile>
+    <ClCompile Include="src\web_socket.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\avl_tree.h" />
@@ -215,6 +221,7 @@
     <ClInclude Include="include\timer.h" />
     <ClInclude Include="include\type_def.h" />
     <ClInclude Include="include\utility.hpp" />
+    <ClInclude Include="include\web_socket.h" />
     <ClInclude Include="src\data_def.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
