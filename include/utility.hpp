@@ -121,13 +121,13 @@ protected:
 private:
 };
 
-extern HFUNCPERFMGR(CreateFuncPerfMgr)(int shm_key);
+extern HFUNCPERFMGR (CreateFuncPerfMgr)(int shm_key);
 extern void (DestroyFuncPerfMgr)(HFUNCPERFMGR mgr);
 extern CFuncPerformanceInfo* (FuncPerfFirst)(HFUNCPERFMGR mgr);
 extern int (GetFuncStackTop)(HFUNCPERFMGR mgr);
 extern CFuncPerformanceInfo* (GetStackFuncPerfInfo)(HFUNCPERFMGR mgr, int idx);
 
-extern HFUNCPERFMGR(DefFuncPerfMgr)(void);
+extern HFUNCPERFMGR (DefFuncPerfMgr)(void);
 
 extern void (FuncStackToFile)(HFUNCPERFMGR mgr, const char* file_path);
 
