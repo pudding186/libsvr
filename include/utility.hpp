@@ -123,7 +123,6 @@ private:
 
 extern HFUNCPERFMGR(CreateFuncPerfMgr)(int shm_key);
 extern void (DestroyFuncPerfMgr)(HFUNCPERFMGR mgr);
-extern const char* (GetFuncStackInfo)(HFUNCPERFMGR mgr);
 extern CFuncPerformanceInfo* (FuncPerfFirst)(HFUNCPERFMGR mgr);
 extern int (GetFuncStackTop)(HFUNCPERFMGR mgr);
 extern CFuncPerformanceInfo* (GetStackFuncPerfInfo)(HFUNCPERFMGR mgr, int idx);

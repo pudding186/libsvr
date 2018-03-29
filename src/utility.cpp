@@ -399,28 +399,6 @@ public:
         return 0;
     }
 
-    const char* UpdateStackInfo(void)
-    {
-        size_t stack_info_len = 0;
-
-        m_stack_info[0] = '\0';
-
-        for (int i = m_func_stack->m_top; i > 0; i--)
-        {
-#ifdef WIN32
-            _snprintf_s(m_stack_info + stack_info_len, sizeof(m_stack_info) - stack_info_len, _TRUNCATE, "call %s()\n", m_func_stack->m_stack[i]->func_name);
-#else
-            snprintf(m_stack_info + stack_info_len, sizeof(m_stack_info) - stack_info_len, "call %s()\n", m_func_stack->m_stack[i]->func_name);
-#endif
-            stack_info_len = strnlen(m_stack_info, sizeof(m_stack_info));
-
-            m_stack_info[stack_info_len - 1] = '\0';
-        }
-        
-
-        return m_stack_info;
-    }
-
     struct func_stack
     {
         int						m_top;
@@ -502,7 +480,6 @@ protected:
     int						m_shm_key;
     struct func_stack*		m_func_stack;
     CFuncPerformanceInfo*	m_cur_func_perf_info;
-    char					m_stack_info[1024 * 512];
 private:
 };
 
@@ -559,11 +536,6 @@ void DestroyFuncPerfMgr(HFUNCPERFMGR mgr)
     delete mgr;
 }
 
-const char* GetFuncStackInfo(HFUNCPERFMGR mgr)
-{
-    return mgr->UpdateStackInfo();
-}
-
 CFuncPerformanceInfo* FuncPerfFirst(HFUNCPERFMGR mgr)
 {
     return mgr->FuncPerfFirst();
@@ -592,7 +564,24 @@ void FuncStackToFile(HFUNCPERFMGR mgr, const char* path)
 
         if (stack_file)
         {
-            fprintf(stack_file, "****** call stack ******\r\n%s\r\n", mgr->UpdateStackInfo());
+            fprintf(stack_file, "****** call stack ******\r\n");
+            int stack_idx = mgr->StackTop();
+
+            while (stack_idx > 0)
+            {
+                CFuncPerformanceInfo* info = mgr->StackFuncPerfInfo(stack_idx - 1);
+                if (info)
+                {
+                    fprintf(stack_file, "[stack:%2d] call %s()\r\n", stack_idx, info->func_name);
+                }
+                else
+                {
+                    fprintf(stack_file, "[stack:%2d] call ?()\r\n", stack_idx);
+                }
+
+                --stack_idx;
+            }
+
             fclose(stack_file);
         }
     }
