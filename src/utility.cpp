@@ -1,11 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <time.h>
 #include <string.h>
 #include "../include/smemory.hpp"
 #include "../include/utility.hpp"
 #include "../include/share_memory.h"
 #include "../include/file_log.h"
+#include "../include/timer.h"
 
 #include <intrin.h>
 class RandomNumGenarator
@@ -549,7 +549,7 @@ extern "C"
 void FuncStackToFile(HFUNCPERFMGR mgr, const char* path)
 {
     struct tm st_cur_time;
-    time_t cur_time = time(0);
+    time_t cur_time = get_time();
     st_cur_time = *localtime(&cur_time);
 
     if (_mk_dir(path))

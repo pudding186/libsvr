@@ -2,10 +2,10 @@
 #include "../include/file_log.h"
 #include "../include/memory_pool.h"
 #include "../include/loop_cache.h"
+#include "../include/timer.h"
 #include <errno.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <time.h>
 #include <direct.h>
 
 #define MAX_LOGFILE_SIZE    (1024*1024*1024)
@@ -148,7 +148,7 @@ void _check_log(log_file* log)
     int index = 0;
     char file_full_path[PATH_MAX];
     struct tm st_cur_time;
-    time_t cur_time = time(0);
+    time_t cur_time = get_time();
     st_cur_time = *localtime(&cur_time);
 
     if (!log->log_file)
@@ -425,6 +425,45 @@ void (destroy_file_log)(HFILELOG log)
 
     free(log);
 }
+
+//bool (file_log_write_now)(HFILELOG log, enum log_level lv, const char* format, ...)
+//{
+//    va_list args;
+//
+//    struct tm st_cur_time;
+//    time_t cur_time;
+//
+//    if (!(log->log_flag & lv))
+//    {
+//        return false;
+//    }
+//
+//    cur_time = get_time();
+//    st_cur_time = *localtime(&cur_time);
+//
+//    fprintf(log->log_file, "%04d-%02d-%02d %02d:%02d:%02d %s ",
+//        st_cur_time.tm_year + 1900, st_cur_time.tm_mon + 1, st_cur_time.tm_mday,
+//        st_cur_time.tm_hour, st_cur_time.tm_min, st_cur_time.tm_sec,
+//        log_lv_to_str(lv));
+//
+//    va_start(args, format);
+//    vfprintf(log->log_file, format, args);
+//    va_end(args);
+//
+//    fprintf(log->log_file, "\r\n");
+//
+//    _begin_console(lv);
+//    printf("%04d-%02d-%02d %02d:%02d:%02d %s ",
+//        st_cur_time.tm_year + 1900, st_cur_time.tm_mon + 1, st_cur_time.tm_mday,
+//        st_cur_time.tm_hour, st_cur_time.tm_min, st_cur_time.tm_sec,
+//        log_lv_to_str(lv));
+//    va_start(args, format);
+//    vprintf(format, args);
+//    va_end(args);
+//    _end_console(lv);
+//    
+//    return true;
+//}
 
 bool (file_log_write)(HFILELOG log, enum log_level lv, const char* format, ...)
 {
