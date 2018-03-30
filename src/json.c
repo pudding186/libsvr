@@ -282,7 +282,7 @@ void destroy_json(HJSONSTRUCT json_struct_ptr)
     {
         if (node_ptr->key)
         {
-            default_memory_manager_free(node_ptr->key);
+            libsvr_memory_manager_free(node_ptr->key);
         }
 
         switch (node_ptr->type)
@@ -298,7 +298,7 @@ void destroy_json(HJSONSTRUCT json_struct_ptr)
         break;
         case json_string:
         {
-            default_memory_manager_free(node_ptr->value.str);
+            libsvr_memory_manager_free(node_ptr->value.str);
 
             free_node = node_ptr;
 
@@ -439,7 +439,7 @@ HJSONNODE json_add_float(HJSONSTRUCT json_struct_ptr, double number, const char*
             return 0;
         }
         node->key_length = key_length;
-        node->key = (char*)default_memory_manager_alloc(node->key_length + 1);
+        node->key = (char*)libsvr_memory_manager_alloc(node->key_length + 1);
         memcpy(node->key, key, node->key_length);
         node->key[node->key_length] = '\0';
 
@@ -480,7 +480,7 @@ HJSONNODE json_add_integer(HJSONSTRUCT json_struct_ptr, long long number, const 
             memory_unit_free(_default_json_node_unit(), node);
             return 0;
         }
-        node->key = (char*)default_memory_manager_alloc(key_length + 1);
+        node->key = (char*)libsvr_memory_manager_alloc(key_length + 1);
         node->key_length = escape_from(key, key_length, node->key);
         node->key[node->key_length] = '\0';
 
@@ -511,7 +511,7 @@ HJSONNODE json_add_string(HJSONSTRUCT json_struct_ptr, const char* string, size_
     node->stack = 0;
     node->type = json_string;
 
-    node->value.str = (char*)default_memory_manager_alloc(string_length + 1);
+    node->value.str = (char*)libsvr_memory_manager_alloc(string_length + 1);
     node->str_length = escape_from(string, string_length, node->value.str);
     node->value.str[node->str_length] = '\0';
 
@@ -524,7 +524,7 @@ HJSONNODE json_add_string(HJSONSTRUCT json_struct_ptr, const char* string, size_
             memory_unit_free(_default_json_node_unit(), node);
             return 0;
         }
-        node->key = (char*)default_memory_manager_alloc(key_length + 1);
+        node->key = (char*)libsvr_memory_manager_alloc(key_length + 1);
         node->key_length = escape_from(key, key_length, node->key);
         node->key[node->key_length] = '\0';
     }
@@ -563,7 +563,7 @@ HJSONNODE json_add_true(HJSONSTRUCT json_struct_ptr, const char* key, size_t key
             memory_unit_free(_default_json_node_unit(), node);
             return 0;
         }
-        node->key = (char*)default_memory_manager_alloc(key_length + 1);
+        node->key = (char*)libsvr_memory_manager_alloc(key_length + 1);
         node->key_length = escape_from(key, key_length, node->key);
         node->key[node->key_length] = '\0';
     }
@@ -603,7 +603,7 @@ HJSONNODE json_add_false(HJSONSTRUCT json_struct_ptr, const char* key, size_t ke
             return 0;
         }
 
-        node->key = (char*)default_memory_manager_alloc(key_length + 1);
+        node->key = (char*)libsvr_memory_manager_alloc(key_length + 1);
         node->key_length = escape_from(key, key_length, node->key);
         node->key[node->key_length] = '\0';
     }
@@ -642,7 +642,7 @@ HJSONNODE json_add_null(HJSONSTRUCT json_struct_ptr, const char* key, size_t key
             memory_unit_free(_default_json_node_unit(), node);
             return 0;
         }
-        node->key = (char*)default_memory_manager_alloc(key_length + 1);
+        node->key = (char*)libsvr_memory_manager_alloc(key_length + 1);
         node->key_length = escape_from(key, key_length, node->key);
         node->key[node->key_length] = '\0';
     }
@@ -700,7 +700,7 @@ HJSONSTRUCT json_add_struct(HJSONSTRUCT json_struct_ptr,
             memory_unit_free(_default_json_node_unit(), new_json_node);
             return 0;
         }
-        new_json_node->key = (char*)default_memory_manager_alloc(key_length + 1);
+        new_json_node->key = (char*)libsvr_memory_manager_alloc(key_length + 1);
         new_json_node->key_length = escape_from(key, key_length, new_json_node->key);
         new_json_node->key[new_json_node->key_length] = '\0';
     }

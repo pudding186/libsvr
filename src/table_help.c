@@ -1,5 +1,6 @@
 #include "../include/table_help.h"
 #include "../include/memory_pool.h"
+#include "./data_def.h"
 #include <string.h>
 
 typedef struct st_int_key_group
@@ -92,8 +93,8 @@ void destroy_quick_tree(HRBTREE tree)
 
     while (node)
     {
-        default_memory_manager_free(rb_node_key_user(node));
-        default_memory_manager_free(rb_node_value(node));
+        libsvr_memory_manager_free(rb_node_key_user(node));
+        libsvr_memory_manager_free(rb_node_value(node));
 
         node = rb_next(node);
     }
@@ -108,7 +109,7 @@ HRBTREE quick_tree(HRBTREE tree, size_t elapse)
     int_key_group* key_group = 0;
 
     size_t value_group_count = 64;
-    void** value_group = (void**)default_memory_manager_alloc(value_group_count*sizeof(void*));
+    void** value_group = (void**)libsvr_memory_manager_alloc(value_group_count*sizeof(void*));
     size_t group_count = 0;
 
     HRBNODE node = rb_first(tree);
@@ -128,9 +129,9 @@ HRBTREE quick_tree(HRBTREE tree, size_t elapse)
                         void** tmp;
                         value_group_count += 1024;
 
-                        tmp = (void**)default_memory_manager_alloc(value_group_count*sizeof(void*));
+                        tmp = (void**)libsvr_memory_manager_alloc(value_group_count*sizeof(void*));
                         memcpy(tmp, value_group, group_count*sizeof(void*));
-                        default_memory_manager_free(value_group);
+                        libsvr_memory_manager_free(value_group);
                         value_group = tmp;
                     }
                     value_group[group_count] = 0;
@@ -143,9 +144,9 @@ HRBTREE quick_tree(HRBTREE tree, size_t elapse)
                     void** tmp;
                     value_group_count += 1024;
 
-                    tmp = (void**)default_memory_manager_alloc(value_group_count*sizeof(void*));
+                    tmp = (void**)libsvr_memory_manager_alloc(value_group_count*sizeof(void*));
                     memcpy(tmp, value_group, group_count*sizeof(void*));
-                    default_memory_manager_free(value_group);
+                    libsvr_memory_manager_free(value_group);
                     value_group = tmp;
                 }
                 value_group[group_count] = rb_node_value(node);
@@ -153,11 +154,11 @@ HRBTREE quick_tree(HRBTREE tree, size_t elapse)
             }
             else
             {
-                void** real_value_group = (void**)default_memory_manager_alloc(group_count*sizeof(void*));
+                void** real_value_group = (void**)libsvr_memory_manager_alloc(group_count*sizeof(void*));
                 memcpy(real_value_group, value_group, group_count*sizeof(void*));
                 rb_tree_insert_user(new_tree, key_group, real_value_group);
 
-                key_group = (int_key_group*)default_memory_manager_alloc(sizeof(int_key_group));
+                key_group = (int_key_group*)libsvr_memory_manager_alloc(sizeof(int_key_group));
                 key_group->key_begin = key;
                 key_group->key_end = key_group->key_begin;
                 value_group[0] = rb_node_value(node);
@@ -166,7 +167,7 @@ HRBTREE quick_tree(HRBTREE tree, size_t elapse)
         }
         else
         {
-            key_group = (int_key_group*)default_memory_manager_alloc(sizeof(int_key_group));
+            key_group = (int_key_group*)libsvr_memory_manager_alloc(sizeof(int_key_group));
             key_group->key_begin = rb_node_key_int(node);
             key_group->key_end = key_group->key_begin;
             value_group[0] = rb_node_value(node);
@@ -177,12 +178,12 @@ HRBTREE quick_tree(HRBTREE tree, size_t elapse)
 
     if (key_group)
     {
-        void** real_value_group = (void**)default_memory_manager_alloc(group_count*sizeof(void*));
+        void** real_value_group = (void**)libsvr_memory_manager_alloc(group_count*sizeof(void*));
         memcpy(real_value_group, value_group, group_count*sizeof(void*));
         rb_tree_insert_user(new_tree, key_group, real_value_group);
     }
 
-    default_memory_manager_free(value_group);
+    libsvr_memory_manager_free(value_group);
 
     destroy_rb_tree(tree);
 
@@ -204,13 +205,13 @@ void add_col_info(HRBTREE tree, const char* col_var_name, size_t col_var_offset,
     HRBNODE exist_node;
     col_var_info* info;
 
-    info = (col_var_info*)default_memory_manager_alloc(sizeof(col_var_info));
+    info = (col_var_info*)libsvr_memory_manager_alloc(sizeof(col_var_info));
     info->col_var_offset = col_var_offset;
     info->col_var_type = col_var_type;
 
     if (!rb_tree_try_insert_str(tree, col_var_name, info, &exist_node))
     {
-        default_memory_manager_free(rb_node_value(exist_node));
+        libsvr_memory_manager_free(rb_node_value(exist_node));
         rb_node_set_value(exist_node, info);
     }
 }
@@ -231,6 +232,6 @@ void del_col_info(HRBTREE tree, const char* col_var_name)
     HRBNODE node = rb_tree_find_str(tree, col_var_name);
     if (node)
     {
-        default_memory_manager_free(rb_node_value(node));
+        libsvr_memory_manager_free(rb_node_value(node));
     }
 }

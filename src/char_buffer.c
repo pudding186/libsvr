@@ -39,13 +39,13 @@ void char_buffer_resize(HCHARBUFFER buffer, size_t size)
     {
         if (buffer->buffer_ptr == buffer->default_buffer)
         {
-            buffer->buffer_ptr = (char*)default_memory_manager_alloc(size);
+            buffer->buffer_ptr = (char*)libsvr_memory_manager_alloc(size);
 
             memcpy(buffer->buffer_ptr, buffer->default_buffer, buffer->buffer_use_size);
         }
         else
         {
-            buffer->buffer_ptr = (char*)default_memory_manager_realloc(buffer->buffer_ptr, size);
+            buffer->buffer_ptr = (char*)libsvr_memory_manager_realloc(buffer->buffer_ptr, size);
         }
 
         buffer->buffer_capacity = size;
@@ -189,7 +189,7 @@ void destroy_char_buffer(HCHARBUFFER buffer)
 
     if (buffer->buffer_ptr != buffer->default_buffer)
     {
-        default_memory_manager_free(buffer->buffer_ptr);
+        libsvr_memory_manager_free(buffer->buffer_ptr);
     }
 
     memory_unit_free(_default_char_buffer_unit(), buffer);

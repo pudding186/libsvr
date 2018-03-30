@@ -30,7 +30,7 @@ HLOOPCACHE create_loop_cache(size_t size, char* data)
     }
     else
     {
-        cache->alloc_cache = (char*)default_memory_manager_alloc(size);
+        cache->alloc_cache = (char*)libsvr_memory_manager_alloc(size);
         cache->cache_begin = cache->alloc_cache;
     }
 
@@ -48,7 +48,7 @@ void destroy_loop_cache(HLOOPCACHE cache)
     {
         if (cache->alloc_cache)
         {
-            default_memory_manager_free(cache->alloc_cache);
+            libsvr_memory_manager_free(cache->alloc_cache);
             cache->alloc_cache = 0;
         }
 

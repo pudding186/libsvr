@@ -50,11 +50,11 @@ extern void* (memory_manager_realloc)(HMEMORYMANAGER mgr, void* old_mem, size_t 
 
 extern void (memory_manager_free)(HMEMORYMANAGER mgr, void* mem);
 
-extern bool (is_valid_ptr_in_unit)(HMEMORYUNIT unit, void* mem);
+extern bool (memory_unit_check)(HMEMORYUNIT unit, void* mem);
 
-extern bool (is_valid_ptr_in_pool)(HMEMORYPOOL pool, void* mem);
+extern bool (memory_pool_check)(HMEMORYPOOL pool, void* mem);
 
-extern bool (is_valid_ptr_in_manager)(HMEMORYMANAGER mgr, void* mem);
+extern bool (memory_manager_check)(HMEMORYMANAGER mgr, void* mem);
 
 #ifdef  __cplusplus
 }

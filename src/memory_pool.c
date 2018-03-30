@@ -8,6 +8,8 @@
 
 #define CRUSH_CODE char* p = 0;*p = 'a';
 
+__declspec(thread) HMEMORYMANAGER lib_svr_mem_mgr = 0;
+
 mem_block* _create_memory_block(mem_unit* unit, size_t unit_count)
 {
     unsigned char* ptr;
@@ -562,7 +564,7 @@ void(memory_manager_free)(HMEMORYMANAGER mgr, void * mem)
 
 
 
-bool is_valid_ptr_in_unit(HMEMORYUNIT unit, void* mem)
+bool memory_unit_check(HMEMORYUNIT unit, void* mem)
 {
     if ((HMEMORYUNIT)memory_check_data(mem) == unit)
     {
@@ -572,7 +574,7 @@ bool is_valid_ptr_in_unit(HMEMORYUNIT unit, void* mem)
     return false;
 }
 
-bool is_valid_ptr_in_pool(HMEMORYPOOL pool, void* mem)
+bool memory_pool_check(HMEMORYPOOL pool, void* mem)
 {
     HMEMORYUNIT unit;
 
@@ -591,7 +593,7 @@ bool is_valid_ptr_in_pool(HMEMORYPOOL pool, void* mem)
     return false;
 }
 
-bool is_valid_ptr_in_manager(HMEMORYMANAGER mgr, void * mem)
+bool memory_manager_check(HMEMORYMANAGER mgr, void * mem)
 {
     HMEMORYUNIT unit = 0;
     HAVLNODE pool_node = 0;
@@ -628,3 +630,22 @@ bool is_valid_ptr_in_manager(HMEMORYMANAGER mgr, void * mem)
     return false;
 }
 
+void* libsvr_memory_manager_realloc(void* old_mem, size_t mem_size)
+{
+    return memory_manager_realloc(lib_svr_mem_mgr, old_mem, mem_size);
+}
+
+void* libsvr_memory_manager_alloc(size_t mem_size)
+{
+    return memory_manager_alloc(lib_svr_mem_mgr, mem_size);
+}
+
+void libsvr_memory_manager_free(void* mem)
+{
+    memory_manager_free(lib_svr_mem_mgr, mem);
+}
+
+bool libsvr_memory_manager_check(void* mem)
+{
+    return memory_manager_check(lib_svr_mem_mgr, mem);
+}

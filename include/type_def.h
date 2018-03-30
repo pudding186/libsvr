@@ -31,23 +31,8 @@ typedef unsigned char   bool;
 #define true 1
 #define false 0
 
-extern void* (default_memory_manager_realloc)(void* old_mem, size_t mem_size);
-
-extern void* (default_memory_manager_alloc)(size_t mem_size);
-
-extern void (default_memory_manager_free)(void* mem);
-
-extern bool (is_valid_ptr_in_default_manager)(void* mem);
-
 #else
 
-extern "C" void* (default_memory_manager_realloc)(void* old_mem, size_t mem_size);
-
-extern "C" void* (default_memory_manager_alloc)(size_t mem_size);
-
-extern "C" void (default_memory_manager_free)(void* mem);
-
-extern "C" bool (is_valid_ptr_in_default_manager)(void* mem);
 
 #endif
 

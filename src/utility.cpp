@@ -6,6 +6,7 @@
 #include "../include/share_memory.h"
 #include "../include/file_log.h"
 #include "../include/timer.h"
+#include "./data_def.h"
 
 #include <intrin.h>
 class RandomNumGenarator
@@ -180,7 +181,7 @@ unsigned long long BKDRHash64(const char* str)
 //    data_fragment_array frag_array;
 //
 //    frag_array.count = 0;
-//    frag_array.fragments = (data_fragment*)default_memory_manager_alloc(sizeof(data_fragment)*alloc_frg_size);
+//    frag_array.fragments = (data_fragment*)libsvr_memory_manager_alloc(sizeof(data_fragment)*alloc_frg_size);
 //
 //
 //    pPos = memnmem(pStart, len, spliter, spliter_len);
@@ -196,7 +197,7 @@ unsigned long long BKDRHash64(const char* str)
 //            if (frag_array.count > alloc_frg_size)
 //            {
 //                alloc_frg_size += 256;
-//                frag_array.fragments = (data_fragment*)default_memory_manager_realloc(frag_array.fragments, sizeof(data_fragment)*alloc_frg_size);
+//                frag_array.fragments = (data_fragment*)libsvr_memory_manager_realloc(frag_array.fragments, sizeof(data_fragment)*alloc_frg_size);
 //            }
 //        }
 //
@@ -213,7 +214,7 @@ unsigned long long BKDRHash64(const char* str)
 //        if (frag_array.count > alloc_frg_size)
 //        {
 //            alloc_frg_size += 256;
-//            frag_array.fragments = (data_fragment*)default_memory_manager_realloc(frag_array.fragments, sizeof(data_fragment)*alloc_frg_size);
+//            frag_array.fragments = (data_fragment*)libsvr_memory_manager_realloc(frag_array.fragments, sizeof(data_fragment)*alloc_frg_size);
 //        }
 //    }
 //
@@ -222,7 +223,7 @@ unsigned long long BKDRHash64(const char* str)
 
 //data_fragment_array split_str_to_fragment(const char* data, int len, const char* spliter, int spliter_len)
 //{
-//    char* new_str = (char*)default_memory_manager_alloc(len + 1);
+//    char* new_str = (char*)libsvr_memory_manager_alloc(len + 1);
 //    memcpy(new_str, data, len);
 //    new_str[len] = 0;
 //
@@ -234,7 +235,7 @@ unsigned long long BKDRHash64(const char* str)
 //    data_fragment_array frag_array;
 //
 //    frag_array.count = 0;
-//    frag_array.fragments = (data_fragment*)default_memory_manager_alloc(sizeof(data_fragment)*alloc_frg_size);
+//    frag_array.fragments = (data_fragment*)libsvr_memory_manager_alloc(sizeof(data_fragment)*alloc_frg_size);
 //
 //    pPos = (char*)memnmem(pStart, len, spliter, spliter_len);
 //
@@ -249,7 +250,7 @@ unsigned long long BKDRHash64(const char* str)
 //            if (frag_array.count > alloc_frg_size)
 //            {
 //                alloc_frg_size += 256;
-//                frag_array.fragments = (data_fragment*)default_memory_manager_realloc(frag_array.fragments, sizeof(data_fragment)*alloc_frg_size);
+//                frag_array.fragments = (data_fragment*)libsvr_memory_manager_realloc(frag_array.fragments, sizeof(data_fragment)*alloc_frg_size);
 //            }
 //        }
 //
@@ -268,7 +269,7 @@ unsigned long long BKDRHash64(const char* str)
 //        if (frag_array.count > alloc_frg_size)
 //        {
 //            alloc_frg_size += 256;
-//            frag_array.fragments = (data_fragment*)default_memory_manager_realloc(frag_array.fragments, sizeof(data_fragment)*alloc_frg_size);
+//            frag_array.fragments = (data_fragment*)libsvr_memory_manager_realloc(frag_array.fragments, sizeof(data_fragment)*alloc_frg_size);
 //        }
 //    }
 //
@@ -279,7 +280,7 @@ unsigned long long BKDRHash64(const char* str)
 //{
 //    if (frag_array.fragments)
 //    {
-//        default_memory_manager_free(frag_array.fragments);
+//        libsvr_memory_manager_free(frag_array.fragments);
 //    }
 //}
 
@@ -287,14 +288,14 @@ str_fragment_array* split_str_to_fragment(const char* str, int str_len, const ch
 {
     int alloc_str_fragment_count = 256;
 
-    char* ptr = (char*)default_memory_manager_alloc(sizeof(str_fragment_array) + str_len + 1);
+    char* ptr = (char*)libsvr_memory_manager_alloc(sizeof(str_fragment_array) + str_len + 1);
     str_fragment_array* frag_array = (str_fragment_array*)ptr;
     frag_array->copy_string = (char*)(ptr + sizeof(str_fragment_array));
     memcpy(frag_array->copy_string, str, str_len);
     frag_array->copy_string[str_len] = 0;
 
     frag_array->fragments_count = 0;
-    frag_array->fragments = (str_fragment*)default_memory_manager_alloc(
+    frag_array->fragments = (str_fragment*)libsvr_memory_manager_alloc(
         sizeof(str_fragment)*alloc_str_fragment_count);
 
     char* pStart = frag_array->copy_string;
@@ -321,7 +322,7 @@ str_fragment_array* split_str_to_fragment(const char* str, int str_len, const ch
         if (frag_array->fragments_count >= alloc_str_fragment_count)
         {
             alloc_str_fragment_count += 256;
-            frag_array->fragments = (str_fragment*)default_memory_manager_realloc(
+            frag_array->fragments = (str_fragment*)libsvr_memory_manager_realloc(
                 frag_array->fragments, sizeof(str_fragment)*alloc_str_fragment_count);
         }
 
@@ -344,11 +345,11 @@ void free_str_fragment_array(str_fragment_array* array)
 {
     if (array->fragments)
     {
-        default_memory_manager_free(array->fragments);
+        libsvr_memory_manager_free(array->fragments);
         array->fragments = 0;
     }
 
-    default_memory_manager_free(array);
+    libsvr_memory_manager_free(array);
 }
 
 

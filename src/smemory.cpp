@@ -8,6 +8,8 @@
 
 extern "C"
 {
+    extern __declspec(thread) HMEMORYMANAGER lib_svr_mem_mgr;
+
     extern __declspec(thread) HMEMORYUNIT def_rb_tree_unit;
     extern __declspec(thread) HMEMORYUNIT def_rb_node_unit;
 
@@ -240,6 +242,11 @@ namespace SMemory
 
     IClassMemory::IClassMemory(void)
     {
+        if (!lib_svr_mem_mgr)
+        {
+            lib_svr_mem_mgr = create_memory_manager(8, 128, 65536, 4 * 1024, 2);
+        }
+
         if (!def_mem_mgr)
         {
             def_mem_mgr = create_memory_manager(8, 128, 65536, 4 * 1024, 2);
@@ -385,6 +392,12 @@ namespace SMemory
             destroy_memory_manager(def_mem_mgr);
             def_mem_mgr = 0;
         }
+
+        if (lib_svr_mem_mgr)
+        {
+            destroy_memory_manager(lib_svr_mem_mgr);
+            lib_svr_mem_mgr = 0;
+        }
     }
 
     bool IClassMemory::IsValidPtr(void* ptr)
@@ -404,28 +417,9 @@ namespace SMemory
             return true;
         }
 
-        return is_valid_ptr_in_manager(def_mem_mgr, (unsigned char*)ptr - sizeof(IClassMemory**) - sizeof(HMEMORYMANAGER*) - sizeof(size_t));
+        return memory_manager_check(def_mem_mgr, (unsigned char*)ptr - sizeof(IClassMemory**) - sizeof(HMEMORYMANAGER*) - sizeof(size_t));
     }
 
     __declspec(thread) static CClassMemory< char, construct_false> g_memory_manager;
 }
 
-void* (default_memory_manager_realloc)(void* old_mem, size_t mem_size)
-{
-    return memory_manager_realloc(SMemory::IClassMemory::def_mem_mgr, old_mem, mem_size);
-}
-
-void* (default_memory_manager_alloc)(size_t mem_size)
-{
-    return memory_manager_alloc(SMemory::IClassMemory::def_mem_mgr, mem_size);
-}
-
-void (default_memory_manager_free)(void* mem)
-{
-    return memory_manager_free(SMemory::IClassMemory::def_mem_mgr, mem);
-}
-
-bool (is_valid_ptr_in_default_manager)(void* mem)
-{
-    return is_valid_ptr_in_manager(SMemory::IClassMemory::def_mem_mgr, mem);
-}
