@@ -332,9 +332,12 @@ void _process_log_unit(log_file* log)
                 fflush(log->log_file);
             }
 
-            while (!loop_cache_push_data(unit->rcy_que, (char*)&cmd, sizeof(log_cmd*)))
+            if (log->m_is_run)
             {
-                Sleep(10);
+                while (!loop_cache_push_data(unit->rcy_que, (char*)&cmd, sizeof(log_cmd*)))
+                {
+                    Sleep(10);
+                }
             }
         }
 
@@ -470,6 +473,7 @@ bool (file_log_write)(HFILELOG log, enum log_level lv, const char* format, ...)
     log_unit* unit = _get_log_unit(log);
 
     log_cmd* cmd = 0;
+    log_cmd* rcy_cmd = 0;
 
     va_list args;
 
@@ -526,19 +530,22 @@ bool (file_log_write)(HFILELOG log, enum log_level lv, const char* format, ...)
         }
     }
 
-    if (loop_cache_push_data(unit->cmd_que, (char*)&cmd, sizeof(log_cmd*)))
+    while (!loop_cache_push_data(unit->cmd_que, (char*)&cmd, sizeof(log_cmd*)))
     {
-        return true;
-    }
-    else
-    {
-        if (cmd->data_ext)
+        if (loop_cache_pop_data(unit->rcy_que, (char*)&rcy_cmd, sizeof(log_cmd*)))
         {
-            memory_manager_free(unit->log_mem_pool_mgr, cmd->data_ext);
+            if (rcy_cmd->data_ext)
+            {
+                memory_manager_free(unit->log_mem_pool_mgr, rcy_cmd->data_ext);
+                rcy_cmd->data_ext = 0;
+            }
+
+            memory_unit_free(unit->log_cmd_unit, rcy_cmd);
         }
-        memory_unit_free(unit->log_cmd_unit, cmd);
-        return false;
+        Sleep(10);
     }
+
+    return true;
 }
 
 bool (file_log_flush)(HFILELOG log)
