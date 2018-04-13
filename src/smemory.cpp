@@ -420,6 +420,6 @@ namespace SMemory
         return memory_manager_check(def_mem_mgr, (unsigned char*)ptr - sizeof(IClassMemory**) - sizeof(HMEMORYMANAGER*) - sizeof(size_t));
     }
 
-    __declspec(thread) static CClassMemory< char, construct_false> g_memory_manager;
+    __declspec(thread) static CClassMemory< char, std::true_type> g_memory_manager;
 }
 

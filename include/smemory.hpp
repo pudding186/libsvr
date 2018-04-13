@@ -3,17 +3,6 @@
 #include <limits>
 #include <iostream>
 
-#define __SET_POD_TYPE(type, line, var) namespace SMemory\
-{\
-    template<>\
-    struct construct_traits<type>{typedef construct_false need_construct;};\
-    extern struct is_pod<type> var##line;\
-}
-
-#define _SET_POD_TYPE(type, line) __SET_POD_TYPE(type, line, var)
-
-#define SET_POD_TYPE(type) _SET_POD_TYPE(type, __LINE__)
-
 #ifdef TRACE_ALLOC
 #define S_NEW(type, size) SMemory::TraceNew<type>(size, __FILE__, __LINE__)
 #define S_DELETE(ptr) SMemory::TraceDelete(ptr)
@@ -27,52 +16,6 @@
 
 namespace SMemory
 {
-    struct construct_true{};
-    struct construct_false{};
-
-    template<typename T>
-    struct construct_traits
-    {
-        typedef construct_true need_construct;
-    };
-
-    template <typename T>
-    struct construct_traits<T*>
-    {
-        typedef construct_false need_construct;
-    };
-
-    template<typename T>
-    struct is_pod
-    {
-        union
-        {
-            T tmp;
-        };
-    };
-
-#define TYPE_NO_CONSTRUCT(type) template<>\
-    struct construct_traits<type> \
-    {\
-        typedef construct_false need_construct; \
-    };
-
-    TYPE_NO_CONSTRUCT(bool)
-    TYPE_NO_CONSTRUCT(char)
-    TYPE_NO_CONSTRUCT(signed char)
-    TYPE_NO_CONSTRUCT(unsigned char)
-    TYPE_NO_CONSTRUCT(short)
-    TYPE_NO_CONSTRUCT(unsigned short)
-    TYPE_NO_CONSTRUCT(int)
-    TYPE_NO_CONSTRUCT(unsigned int)
-    TYPE_NO_CONSTRUCT(long)
-    TYPE_NO_CONSTRUCT(unsigned long)
-    TYPE_NO_CONSTRUCT(long long)
-    TYPE_NO_CONSTRUCT(unsigned long long)
-    TYPE_NO_CONSTRUCT(float)
-    TYPE_NO_CONSTRUCT(double)
-    TYPE_NO_CONSTRUCT(long double)
-
     class IClassMemory
     {
     public:
@@ -102,18 +45,18 @@ namespace SMemory
     };
 
     template <typename T>
-    class CClassMemory<T, construct_true>
+    class CClassMemory<T, std::false_type>
         :public IClassMemory
     {
     public:
 
-        CClassMemory<T, construct_true>(void)
+        CClassMemory<T, std::false_type>(void)
         {
             name = typeid(T).name();
             unit = create_memory_unit(sizeof(HMEMORYMANAGER*) + sizeof(IClassMemory**) + sizeof(T));
         }
 
-        ~CClassMemory<T, construct_true>(void)
+        ~CClassMemory<T, std::false_type>(void)
         {
             name = 0;
             destroy_memory_unit(unit);
@@ -189,18 +132,18 @@ namespace SMemory
     };
 
     template <typename T>
-    class CClassMemory<T, construct_false>
+    class CClassMemory<T, std::true_type>
         :public IClassMemory
     {
     public:
 
-        CClassMemory<T, construct_false>(void)
+        CClassMemory<T, std::true_type>(void)
         {
             name = typeid(T).name();
             unit = create_memory_unit(sizeof(HMEMORYMANAGER*) + sizeof(IClassMemory**) + sizeof(T));
         }
 
-        ~CClassMemory<T, construct_false>(void)
+        ~CClassMemory<T, std::true_type>(void)
         {
             name = 0;
             destroy_memory_unit(unit);
@@ -251,9 +194,9 @@ namespace SMemory
     };
 
     template <typename T>
-    inline CClassMemory<T, typename construct_traits<T>::need_construct>& get_class_memory(void)
+    inline CClassMemory<T, typename std::is_pod<T>::type>& get_class_memory(void)
     {
-        __declspec(thread) static CClassMemory< T, typename construct_traits<T>::need_construct> class_memory;
+        __declspec(thread) static CClassMemory< T, typename std::is_pod<T>::type> class_memory;
         return class_memory;
     }
 
@@ -336,7 +279,7 @@ namespace SMemory
 
         pointer allocate(size_type num, const void* hint= 0)
         {
-            __declspec(thread) static CClassMemory< T, construct_false> class_memory;
+            __declspec(thread) static CClassMemory< T, std::true_type> class_memory;
             return (pointer)(class_memory.New(num));
         }
 
