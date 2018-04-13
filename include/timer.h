@@ -18,7 +18,7 @@ extern void (timer_mod)(HTIMERINFO timer, unsigned elapse, int count, void* data
 
 extern void (timer_del)(HTIMERINFO timer);
 
-extern bool (timer_update)(HTIMERMANAGER mgr, unsigned elapse);
+extern void (timer_update)(HTIMERMANAGER mgr, unsigned run_time);
 
 extern void* (timer_get_data)(HTIMERINFO timer);
 
