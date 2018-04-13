@@ -2100,7 +2100,7 @@ bool iocp_tcp_run(HNETMANAGER mgr, unsigned int run_time)
 
         if (run_time)
         {
-            if (get_tick() - tick >= run_time)
+            if (get_tick() - tick > run_time)
             {
                 break;
             }

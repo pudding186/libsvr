@@ -353,15 +353,13 @@ void timer_del(HTIMERINFO timer)
         timer->count = 0;
 }
 
-bool timer_update(HTIMERMANAGER mgr, unsigned elapse)
+void timer_update(HTIMERMANAGER mgr, unsigned run_time)
 {
-    unsigned tick = get_tick();
-
-    bool is_time_out = false;
-
     struct st_timer_info* info;
 
-    while (tick != mgr->last_tick)
+    unsigned int tick = get_tick();
+
+    while ((int)(tick) - (int)(mgr->last_tick) >= 0)
     {
         struct list_head work_list;
         struct list_head* head = &work_list;
@@ -388,65 +386,55 @@ bool timer_update(HTIMERMANAGER mgr, unsigned elapse)
                 *a = 'a';
             }
 
-            if (0 == info->count)
+            if (info->count)
             {
-                info->data = 0;
-                //memory_unit_free(_get_timer_info_unit(), info);
-                memory_unit_free(mgr->timer_info_unit, info);
-            }
-            else
-            {
-                if (elapse)
+                if (run_time)
                 {
-                    if (!is_time_out)
+                    unsigned int cur_tick = get_tick();
+                    if (cur_tick - tick > run_time)
                     {
-                        if (get_tick() - tick > elapse)
-                        {
-                            is_time_out = true;
-                        }
+                        info->expires = cur_tick;
+                        _add_timer(info);
+                        continue;
                     }
                 }
 
-                if (is_time_out)
+                if (info->count > 0)
                 {
-                    info->expires = get_tick();
+                    --info->count;
+                }
 
-                    _add_timer(info);
+                mgr->func_on_timer(info);
+
+                if (0 == info->count)
+                {
+                    info->data = 0;
+                    memory_unit_free(mgr->timer_info_unit, info);
                 }
                 else
                 {
-                    if (info->count > 0)
-                    {
-                        --info->count;
-                    }
+                    info->expires = mgr->last_tick + info->elapse;
 
-                    mgr->func_on_timer(info);
-
-                    if (0 == info->count)
-                    {
-                        info->data = 0;
-                        //memory_unit_free(_get_timer_info_unit(), info);
-                        memory_unit_free(mgr->timer_info_unit, info);
-                    }
-                    else
-                    {
-                        info->expires = mgr->last_tick + info->elapse;
-
-                        _add_timer(info);
-                    }
+                    _add_timer(info);
                 }
+            }
+            else
+            {
+                info->data = 0;
+                memory_unit_free(mgr->timer_info_unit, info);
             }
         }
 
         ++mgr->last_tick;
 
-        if (is_time_out)
+        if (run_time)
         {
-            return true;
+            if (get_tick() - tick > run_time)
+            {
+                return;
+            }
         }
     }
-
-    return false;
 }
 
 void* timer_get_data(HTIMERINFO timer)
