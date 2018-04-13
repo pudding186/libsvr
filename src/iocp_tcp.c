@@ -2087,7 +2087,7 @@ void iocp_tcp_close_session(HSESSION socket)
 
 bool iocp_tcp_run(HNETMANAGER mgr, unsigned int run_time)
 {
-    unsigned int tick = GetTickCount();
+    unsigned int tick = get_tick();
 
     for (;;)
     {
@@ -2100,7 +2100,7 @@ bool iocp_tcp_run(HNETMANAGER mgr, unsigned int run_time)
 
         if (run_time)
         {
-            if (GetTickCount() - tick >= run_time)
+            if (get_tick() - tick >= run_time)
             {
                 break;
             }
