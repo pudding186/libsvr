@@ -88,6 +88,22 @@ public:\
 #define INSTANCE_SINGLETON(cls) \
     cls* cls::sm_poInstance = NULL;
 
+#define DEFMEMBER(type,member,name)								\
+    public:														\
+    inline void set_##name(type name){member=name;}					\
+    inline type get_##name() const {return member;}					\
+protected:														\
+    type member;												\
+public:
+
+#define DEFREFMEMBER(type,member,name)							\
+	public:														\
+	inline void set_##name(const type& name){member=name;}			\
+	inline const type& get_##name() const {return member;}			\
+protected:														\
+	type member;												\
+public:
+
 //////////////////////////////////////////////////////////////////////////
 
 typedef class CFuncPerformanceMgr* HFUNCPERFMGR;
