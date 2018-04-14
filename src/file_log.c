@@ -553,6 +553,7 @@ bool (file_log_flush)(HFILELOG log)
     log_unit* unit = _get_log_unit(log);
 
     log_cmd* cmd = 0;
+    log_cmd* rcy_cmd = 0;
 
     if (loop_cache_pop_data(unit->rcy_que, (char*)&cmd, sizeof(log_cmd*)))
     {
@@ -572,15 +573,22 @@ bool (file_log_flush)(HFILELOG log)
 
     cmd->cmd = LOG_CMD_FLUSH;
 
-    if (loop_cache_push_data(unit->cmd_que, (char*)&cmd, sizeof(log_cmd*)))
+    while (!loop_cache_push_data(unit->cmd_que, (char*)&cmd, sizeof(log_cmd*)))
     {
-        return true;
+        if (loop_cache_pop_data(unit->rcy_que, (char*)&rcy_cmd, sizeof(log_cmd*)))
+        {
+            if (rcy_cmd->data_ext)
+            {
+                memory_manager_free(unit->log_mem_pool_mgr, rcy_cmd->data_ext);
+                rcy_cmd->data_ext = 0;
+            }
+
+            memory_unit_free(unit->log_cmd_unit, rcy_cmd);
+        }
+        Sleep(10);
     }
-    else
-    {
-        memory_unit_free(unit->log_cmd_unit, cmd);
-        return false;
-    }
+
+    return true;
 }
 
 void file_log_option(HFILELOG log, enum log_level lv, bool open_or_not)
