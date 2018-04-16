@@ -263,7 +263,7 @@ namespace SMemory
             return &value;
         }
         const_pointer address(const_reference value)const{
-            return (const_pointer)&value:
+            return (const_pointer)&value;
         }
 
         Allocator() throw() {}
