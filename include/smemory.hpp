@@ -35,7 +35,7 @@ namespace SMemory
         __declspec(thread) static HMEMORYMANAGER def_mem_mgr;
     };
 
-    template <typename T, typename TC>
+    template <typename T, typename POD>
     class CClassMemory
         :public IClassMemory
     {
