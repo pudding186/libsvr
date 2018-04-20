@@ -38,7 +38,7 @@
                                     }\
                                     m_strErrorInfo += ">\r\n";
 
-#define ERRORINFO_ITEM(strName, strType, strCount, strRefer, strId, strSelect, strLength, strComment)\
+#define ERRORINFO_ITEM(strName, strType, strCount, strRefer, strId, strSelect, strLength, strComment, strArray)\
                                     m_strErrorInfo +="\t<item ";\
                                     if (!strName.empty())\
                                     {\
@@ -72,6 +72,10 @@
                                     {\
                                         m_strErrorInfo += "comment=\""+strComment+"\" ";\
                                     }\
+                                    if (!strArray.empty())\
+                                    {\
+                                        m_strErrorInfo += "comment=\""+strArray+"\" ";\
+                                    }\
                                     m_strErrorInfo +="/>\r\n";
 
 CProtocolMaker::CProtocolMaker(void)
@@ -96,7 +100,8 @@ bool CProtocolMaker::MakeProtocol( const std::string& strXML, const std::string&
 
     if (!oXml.Load(strXML.c_str()))
     {
-        m_strErrorInfo = "加载协议文件"+strXML+"失败!";
+        m_strErrorInfo = "加载协议文件"+strXML+"失败! ";
+        m_strErrorInfo += oXml.GetError();
         goto ERROR_DEAL;
     }
 
@@ -112,7 +117,7 @@ bool CProtocolMaker::MakeProtocol( const std::string& strXML, const std::string&
         goto ERROR_DEAL;
 
     fprintf(pHppFile, "#pragma once\r\n\r\n");
-    fprintf(pHppFile, "#include \"netdata.h\"\r\n\r\n");
+    fprintf(pHppFile, "#include \"net_data.hpp\"\r\n\r\n");
     fprintf(pCppFile, "#include \"%s.hpp\"\r\n\r\n", strVal.c_str());
 
     strMouleName = strVal;
@@ -456,7 +461,7 @@ bool CProtocolMaker::__WriteData( FILE* pHppFile, CMarkupSTL& rXml )
 
         while (rXml.FindElem("item"))
         {
-            CAttrib vecAttrib(8);
+            CAttrib vecAttrib(9);
             vecAttrib[eName] = rXml.GetAttrib("name");
             vecAttrib[eType] = rXml.GetAttrib("type");
             vecAttrib[eCount] = rXml.GetAttrib("count");
@@ -465,6 +470,7 @@ bool CProtocolMaker::__WriteData( FILE* pHppFile, CMarkupSTL& rXml )
             vecAttrib[eSelect] = rXml.GetAttrib("select");
             vecAttrib[eComment] = rXml.GetAttrib("comment");
             vecAttrib[eLength] = rXml.GetAttrib("length");
+            vecAttrib[eArray] = rXml.GetAttrib("array");
 
             CItem::iterator it  = mapItem.find(vecAttrib[eName]);
             if (it != mapItem.end())
@@ -583,8 +589,9 @@ bool CProtocolMaker::__WriteItem( FILE* pHppFile, CMarkupSTL& rXml, EDataType eD
     std::string strSelect = rXml.GetAttrib("select");
     std::string strComment = rXml.GetAttrib("comment");
     std::string strLength = rXml.GetAttrib("length");
+    std::string strArray = rXml.GetAttrib("array");
 
-    ERRORINFO_ITEM(strName, strType, strCount, strRefer, strId, strSelect, strLength, strComment);
+    ERRORINFO_ITEM(strName, strType, strCount, strRefer, strId, strSelect, strLength, strComment, strArray);
 
     if (strName.empty() || strType.empty())
     {
@@ -621,6 +628,12 @@ bool CProtocolMaker::__WriteItem( FILE* pHppFile, CMarkupSTL& rXml, EDataType eD
             return false;
         }
 
+        if (!strArray.empty())
+        {
+            m_strErrorInfo += "union中不能有数组";
+            return false;
+        }
+
         if (!strRefer.empty())
         {
             m_strErrorInfo += "union中不能有refer属性";
@@ -645,6 +658,30 @@ bool CProtocolMaker::__WriteItem( FILE* pHppFile, CMarkupSTL& rXml, EDataType eD
     {
         if (__IsKeyType(strType) || __IsStruct(strType))
         {
+            if (!strArray.empty())
+            {
+                if (!strCount.empty())
+                {
+                    m_strErrorInfo += "有array属性就不能有count属性";
+                    return false;
+                }
+
+                if (!strRefer.empty())
+                {
+                    m_strErrorInfo += "有array属性就不能有refer属性";
+                    return false;
+                }
+
+                if (strArray != "uint8" &&
+                    strArray != "uint16" &&
+                    strArray != "uint32" &&
+                    strArray != "uint64")
+                {
+                    m_strErrorInfo += "arrayd属性值必须为 uint8, uint16, uint32, uint64 中的一种";
+                    return false;
+                }
+            }
+
             if (!strCount.empty())
             {
                 if (!__IsAllDigit(strCount))
@@ -765,6 +802,11 @@ bool CProtocolMaker::__WriteItem( FILE* pHppFile, CMarkupSTL& rXml, EDataType eD
                 m_strErrorInfo += "type=union不能有refer属性";
                 return false;
             }
+            if (!strArray.empty())
+            {
+                m_strErrorInfo += "type=union不能有array属性";
+                return false;
+            }
             if (!strId.empty())
             {
                 m_strErrorInfo += "type=union不能有id属性";
@@ -825,7 +867,7 @@ bool CProtocolMaker::__WriteItem( FILE* pHppFile, CMarkupSTL& rXml, EDataType eD
         strCStyle = strType;
     }
 
-    if (strCount.empty())
+    if (strCount.empty() && strArray.empty())
     {
         if (strType == "string")
         {
@@ -841,12 +883,45 @@ bool CProtocolMaker::__WriteItem( FILE* pHppFile, CMarkupSTL& rXml, EDataType eD
     }
     else
     {
-        if (strType == "string")
+        if (!strCount.empty())
         {
-            m_strErrorInfo += "type=string不能有count属性";
-            return false;
+            if (strType == "string")
+            {
+                m_strErrorInfo += "type=string不能有count属性";
+                return false;
+            }
+            fprintf(pHppFile, "\t%-*s %s[%s];", 25, strCStyle.c_str(), strName.c_str(), strCount.c_str());
         }
-        fprintf(pHppFile, "\t%-*s %s[%s];", 25, strCStyle.c_str(), strName.c_str(), strCount.c_str());
+
+        if (!strArray.empty())
+        {
+            std::string strArrayCtype;
+            if (strArray == "uint8")
+            {
+                strArrayCtype = "unsigned char";
+            }
+            else if (strArray == "uint16")
+            {
+                strArrayCtype = "unsigned short";
+            }
+            else if (strArray == "uint32")
+            {
+                strArrayCtype = "unsigned int";
+            }
+            else if (strArray == "uint64")
+            {
+                strArrayCtype = "unsigned long long";
+            }
+
+
+            if (strType == "string")
+            {
+                m_strErrorInfo += "type=string不能有array属性";
+                return false;
+            }
+            std::string array_name = "DataArray<" + strCStyle + ", " + strArrayCtype + ">";
+            fprintf(pHppFile, "\t%-*s %s;", 25, array_name.c_str(), strName.c_str());
+        }
     }
 
     if (!strComment.empty())
@@ -878,6 +953,7 @@ bool CProtocolMaker::__WriteStructProtocolEnCodeFunc( CMarkupSTL& rXml, FILE* pH
         std::string strCount = rXml.GetAttrib("count");
         std::string strRefer = rXml.GetAttrib("refer");
         std::string strSelect = rXml.GetAttrib("select");
+        std::string strArray = rXml.GetAttrib("array");
         std::string strEnFuncName = "";
 
         if (strType == "uint8")
@@ -927,7 +1003,7 @@ bool CProtocolMaker::__WriteStructProtocolEnCodeFunc( CMarkupSTL& rXml, FILE* pH
             {
                 fprintf(pCppFile, "\tif(-1 == poNetData->AddString(pstIn->%s, sizeof(pstIn->%s)))\r\n\t\treturn -1;\r\n\r\n", strName.c_str(), strName.c_str());
             }
-            else if (strCount.empty())
+            else if (strCount.empty() && strArray.empty())
             {
                 if (__IsKeyType(strType))
                 {
@@ -940,70 +1016,160 @@ bool CProtocolMaker::__WriteStructProtocolEnCodeFunc( CMarkupSTL& rXml, FILE* pH
             }
             else
             {
-                if (__IsKeyType(strType))
+                if (!strArray.empty())
                 {
-                    if (strRefer.empty())
+                    if (__IsKeyType(strType))
                     {
-                        fprintf(pCppFile, "\t{\r\n\t\tint iCount = %s;\r\n", strCount.c_str());
+                        std::string strCStyle = "";
+
+                        if (strArray == "uint8")
+                        {
+                            strEnFuncName = "AddByte";
+                            strCStyle = "unsigned char";
+                        }
+                        else if (strArray == "uint16")
+                        {
+                            strEnFuncName = "AddWord";
+                            strCStyle = "unsigned short";
+                        }
+                        else if (strArray == "uint32")
+                        {
+                            strEnFuncName = "AddDword";
+                            strCStyle = "unsigned int";
+                        }
+                        else if (strArray == "uint64")
+                        {
+                            strEnFuncName = "AddQword";
+                            strCStyle = "unsigned long long";
+                        }
+
+                        fprintf(pCppFile, "\tif(-1 == poNetData->%s((%s)pstIn->%s.size()))\r\n\t\treturn -1;\r\n\r\n", strEnFuncName.c_str(), strCStyle.c_str(), strName.c_str());
+
+                        if (strType == "uint8")
+                        {
+                            strCStyle = "unsigned char";
+                        }
+                        else if (strType == "int8")
+                        {
+                            strCStyle = "char";
+                        }
+                        else if (strType == "uint16")
+                        {
+                            strCStyle = "unsigned short";
+                        }
+                        else if (strType == "int16")
+                        {
+                            strCStyle = "short";
+                        }
+                        else if (strType == "uint32")
+                        {
+                            strCStyle = "unsigned int";
+                        }
+                        else if (strType == "int32")
+                        {
+                            strCStyle = "int";
+                        }
+                        else if (strType == "uint64")
+                        {
+                            strCStyle = "unsigned long long";
+                        }
+                        else if (strType == "int64")
+                        {
+                            strCStyle = "signed long long";
+                        }
+
+                        fprintf(pCppFile, "\tif(-1 == poNetData->AddBlob((char*)&pstIn->%s[0], pstIn->%s.size()*sizeof(%s)))\r\n\t\t\treturn -1;\r\n\r\n", strName.c_str(), strName.c_str(), strCStyle.c_str());
                     }
                     else
                     {
-                        fprintf(pCppFile, "\t{\r\n\t\tint iCount = (((%s) < ((int)pstIn->%s)) ? (%s) : ((int)pstIn->%s));\r\n", strCount.c_str(), strRefer.c_str(), strCount.c_str(), strRefer.c_str());
-                    }
+                        std::string strCStyle = "";
+                        if (strArray == "uint8")
+                        {
+                            strEnFuncName = "AddByte";
+                            strCStyle = "unsigned char";
+                        }
+                        else if (strArray == "uint16")
+                        {
+                            strEnFuncName = "AddWord";
+                            strCStyle = "unsigned short";
+                        }
+                        else if (strArray == "uint32")
+                        {
+                            strEnFuncName = "AddDword";
+                            strCStyle = "unsigned int";
+                        }
+                        else if (strArray == "uint64")
+                        {
+                            strEnFuncName = "AddQword";
+                            strCStyle = "unsigned long long";
+                        }
 
-                    std::string strCStyle ="";
-
-                    if (strType == "uint8")
-                    {
-                        strCStyle = "unsigned char";
+                        fprintf(pCppFile, "\tif(-1 == poNetData->%s((%s)pstIn->%s.size()))\r\n\t\treturn -1;\r\n\r\n", strEnFuncName.c_str(), strCStyle.c_str(), strName.c_str());
+                        fprintf(pCppFile, "\tfor (size_t i = 0; i < pstIn->%s.size(); i++)\r\n\t{\r\n", strName.c_str());
+                        fprintf(pCppFile, "\t\tif(-1 == EnCode%s(&pstIn->%s[i], poNetData))\r\n\t\t\treturn -1;\r\n\t}\r\n\r\n", strType.c_str(), strName.c_str());
                     }
-                    else if (strType == "int8")
-                    {
-                        strCStyle = "char";
-                    }
-                    else if (strType == "uint16")
-                    {
-                        strCStyle = "unsigned short";
-                    }
-                    else if (strType == "int16")
-                    {
-                        strCStyle = "short";
-                    }
-                    else if (strType == "uint32")
-                    {
-                        strCStyle = "unsigned int";
-                    }
-                    else if (strType == "int32")
-                    {
-                        strCStyle = "int";
-                    }
-                    else if (strType == "uint64")
-                    {
-                        strCStyle = "unsigned long long";
-                    }
-                    else if (strType == "int64")
-                    {
-                        strCStyle = "signed long long";
-                    }
-
-                    fprintf(pCppFile, "\t\tif(-1 == poNetData->AddBlob((char*)pstIn->%s, iCount*sizeof(%s)))\r\n\t\t\treturn -1;\r\n\t}\r\n", strName.c_str(), strCStyle.c_str());
-                    //fprintf(pCppFile, "\tfor(int i = 0; i < %s; i++)\r\n\t{\r\n", strCount.c_str());
-                    //if (!strRefer.empty())
-                    //{
-                    //    fprintf(pCppFile, "\t\tif(i >= (int)pstIn->%s)\r\n\t\t\tbreak;\r\n", strRefer.c_str());
-                    //}
-
-                    //fprintf(pCppFile, "\t\tif(-1 == poNetData->%s(pstIn->%s[i]))\r\n\t\t\treturn -1;\r\n\t}\r\n\r\n", strEnFuncName.c_str(), strName.c_str());
                 }
-                else
-                {
-                    fprintf(pCppFile, "\tfor(int i = 0; i < %s; i++)\r\n\t{\r\n", strCount.c_str());
-                    if (!strRefer.empty())
-                    {
-                        fprintf(pCppFile, "\t\tif(i >= (int)pstIn->%s)\r\n\t\t\tbreak;\r\n", strRefer.c_str());
-                    }
 
-                    fprintf(pCppFile, "\t\tif(-1 == EnCode%s(&pstIn->%s[i], poNetData))\r\n\t\t\treturn -1;\r\n\t}\r\n\r\n", strType.c_str(), strName.c_str());
+                if (!strCount.empty())
+                {
+                    if (__IsKeyType(strType))
+                    {
+                        if (strRefer.empty())
+                        {
+                            fprintf(pCppFile, "\t{\r\n\t\tint iCount = %s;\r\n", strCount.c_str());
+                        }
+                        else
+                        {
+                            fprintf(pCppFile, "\t{\r\n\t\tint iCount = (((%s) < ((int)pstIn->%s)) ? (%s) : ((int)pstIn->%s));\r\n", strCount.c_str(), strRefer.c_str(), strCount.c_str(), strRefer.c_str());
+                        }
+
+                        std::string strCStyle = "";
+
+                        if (strType == "uint8")
+                        {
+                            strCStyle = "unsigned char";
+                        }
+                        else if (strType == "int8")
+                        {
+                            strCStyle = "char";
+                        }
+                        else if (strType == "uint16")
+                        {
+                            strCStyle = "unsigned short";
+                        }
+                        else if (strType == "int16")
+                        {
+                            strCStyle = "short";
+                        }
+                        else if (strType == "uint32")
+                        {
+                            strCStyle = "unsigned int";
+                        }
+                        else if (strType == "int32")
+                        {
+                            strCStyle = "int";
+                        }
+                        else if (strType == "uint64")
+                        {
+                            strCStyle = "unsigned long long";
+                        }
+                        else if (strType == "int64")
+                        {
+                            strCStyle = "signed long long";
+                        }
+
+                        fprintf(pCppFile, "\t\tif(-1 == poNetData->AddBlob((char*)pstIn->%s, iCount*sizeof(%s)))\r\n\t\t\treturn -1;\r\n\t}\r\n", strName.c_str(), strCStyle.c_str());
+                    }
+                    else
+                    {
+                        fprintf(pCppFile, "\tfor(int i = 0; i < %s; i++)\r\n\t{\r\n", strCount.c_str());
+                        if (!strRefer.empty())
+                        {
+                            fprintf(pCppFile, "\t\tif(i >= (int)pstIn->%s)\r\n\t\t\tbreak;\r\n", strRefer.c_str());
+                        }
+
+                        fprintf(pCppFile, "\t\tif(-1 == EnCode%s(&pstIn->%s[i], poNetData))\r\n\t\t\treturn -1;\r\n\t}\r\n\r\n", strType.c_str(), strName.c_str());
+                    }
                 }
             }
         }
@@ -1033,6 +1199,7 @@ bool CProtocolMaker::__WriteStructProtocolDeCodeFunc( CMarkupSTL& rXml, FILE* pH
         std::string strCount = rXml.GetAttrib("count");
         std::string strRefer = rXml.GetAttrib("refer");
         std::string strSelect = rXml.GetAttrib("select");
+        std::string strArray = rXml.GetAttrib("array");
         std::string strEnFuncName = "";
 
         if (strType == "uint8")
@@ -1067,10 +1234,6 @@ bool CProtocolMaker::__WriteStructProtocolDeCodeFunc( CMarkupSTL& rXml, FILE* pH
         {
             strEnFuncName = "DelQword";
         }
-        //else if (strType == "blob")
-        //{
-        //    strEnFuncName = "DelBlob";
-        //}
 
         if (__IsUnion(strType))
         {
@@ -1082,7 +1245,7 @@ bool CProtocolMaker::__WriteStructProtocolDeCodeFunc( CMarkupSTL& rXml, FILE* pH
             {
                 fprintf(pCppFile, "\tif(-1 == poNetData->DelString(pstOut->%s, sizeof(pstOut->%s)))\r\n\t\treturn -1;\r\n\r\n", strName.c_str(), strName.c_str());
             }
-            else if (strCount.empty())
+            else if (strCount.empty() && strArray.empty())
             {
                 if (__IsKeyType(strType))
                 {
@@ -1095,70 +1258,162 @@ bool CProtocolMaker::__WriteStructProtocolDeCodeFunc( CMarkupSTL& rXml, FILE* pH
             }
             else
             {
-                if (__IsKeyType(strType))
+                if (!strArray.empty())
                 {
-                    if (strRefer.empty())
+                    if (__IsKeyType(strType))
                     {
-                        fprintf(pCppFile, "\t{\r\n\t\tint iCount = %s;\r\n\t\tif(iCount < 0)\r\n\t\t\treturn -1;\r\n", strCount.c_str());
+                        std::string strCStyle = "";
+
+                        if (strArray == "uint8")
+                        {
+                            strEnFuncName = "DelByte";
+                            strCStyle = "unsigned char";
+                        }
+                        else if (strArray == "uint16")
+                        {
+                            strEnFuncName = "DelWord";
+                            strCStyle = "unsigned short";
+                        }
+                        else if (strArray == "uint32")
+                        {
+                            strEnFuncName = "DelDword";
+                            strCStyle = "unsigned int";
+                        }
+                        else if (strArray == "uint64")
+                        {
+                            strEnFuncName = "DelQword";
+                            strCStyle = "unsigned long long";
+                        }
+
+                        fprintf(pCppFile, "\t{\r\n\t\t%s array_size;\r\n\t\tif(-1 == poNetData->%s(array_size))\r\n\t\t\treturn -1;\r\n\r\n", strCStyle.c_str(), strEnFuncName.c_str());
+                        fprintf(pCppFile, "\t\tpstOut->%s.resize(array_size);\r\n", strName.c_str());
+
+                        if (strType == "uint8")
+                        {
+                            strCStyle = "unsigned char";
+                        }
+                        else if (strType == "int8")
+                        {
+                            strCStyle = "char";
+                        }
+                        else if (strType == "uint16")
+                        {
+                            strCStyle = "unsigned short";
+                        }
+                        else if (strType == "int16")
+                        {
+                            strCStyle = "short";
+                        }
+                        else if (strType == "uint32")
+                        {
+                            strCStyle = "unsigned int";
+                        }
+                        else if (strType == "int32")
+                        {
+                            strCStyle = "int";
+                        }
+                        else if (strType == "uint64")
+                        {
+                            strCStyle = "unsigned long long";
+                        }
+                        else if (strType == "int64")
+                        {
+                            strCStyle = "signed long long";
+                        }
+
+                        fprintf(pCppFile, "\t\tif(-1 == poNetData->DelBlob((char*)&pstOut->%s[0], array_size*sizeof(%s)))\r\n\t\t\treturn -1;\r\n\t}\r\n\r\n", strName.c_str(), strCStyle.c_str());
                     }
                     else
                     {
-                        fprintf(pCppFile, "\t{\r\n\t\tint iCount = (((%s) < ((int)pstOut->%s)) ? (%s) : ((int)pstOut->%s));\r\n\t\tif(iCount < 0)\r\n\t\t\treturn -1;\r\n", strCount.c_str(), strRefer.c_str(), strCount.c_str(), strRefer.c_str());
-                    }
+                        std::string strCStyle = "";
+                        if (strArray == "uint8")
+                        {
+                            strEnFuncName = "DelByte";
+                            strCStyle = "unsigned char";
+                        }
+                        else if (strArray == "uint16")
+                        {
+                            strEnFuncName = "DelWord";
+                            strCStyle = "unsigned short";
+                        }
+                        else if (strArray == "uint32")
+                        {
+                            strEnFuncName = "DelDword";
+                            strCStyle = "unsigned int";
+                        }
+                        else if (strArray == "uint64")
+                        {
+                            strEnFuncName = "DelQword";
+                            strCStyle = "unsigned long long";
+                        }
 
-                    std::string strCStyle ="";
-
-                    if (strType == "uint8")
-                    {
-                        strCStyle = "unsigned char";
+                        fprintf(pCppFile, "\t{\r\n\t\t%s array_size;\r\n\t\tif(-1 == poNetData->%s(array_size))\r\n\t\t\treturn -1;\r\n\r\n", strCStyle.c_str(), strEnFuncName.c_str());
+                        fprintf(pCppFile, "\t\tpstOut->%s.resize(array_size);\r\n", strName.c_str());
+                        fprintf(pCppFile, "\t\tfor (%s i = 0; i < array_size; i++)\r\n\t\t{\r\n", strCStyle.c_str());
+                        fprintf(pCppFile, "\t\t\tif(-1 == DeCode%s(&pstOut->%s[i], poNetData))\r\n\t\t\t\treturn -1;\r\n\t\t}\r\n\t}\r\n", strType.c_str(), strName.c_str());
                     }
-                    else if (strType == "int8")
-                    {
-                        strCStyle = "char";
-                    }
-                    else if (strType == "uint16")
-                    {
-                        strCStyle = "unsigned short";
-                    }
-                    else if (strType == "int16")
-                    {
-                        strCStyle = "short";
-                    }
-                    else if (strType == "uint32")
-                    {
-                        strCStyle = "unsigned int";
-                    }
-                    else if (strType == "int32")
-                    {
-                        strCStyle = "int";
-                    }
-                    else if (strType == "uint64")
-                    {
-                        strCStyle = "unsigned long long";
-                    }
-                    else if (strType == "int64")
-                    {
-                        strCStyle = "signed long long";
-                    }
-
-                    fprintf(pCppFile, "\t\tif(-1 == poNetData->DelBlob((char*)pstOut->%s, iCount*sizeof(%s)))\r\n\t\t\treturn -1;\r\n\t}\r\n", strName.c_str(), strCStyle.c_str());
-                    //fprintf(pCppFile, "\tfor(int i = 0; i < %s; i++)\r\n\t{\r\n", strCount.c_str());
-                    //if (!strRefer.empty())
-                    //{
-                    //    fprintf(pCppFile, "\t\tif(i >= (int)pstOut->%s)\r\n\t\t\tbreak;\r\n", strRefer.c_str());
-                    //}
-
-                    //fprintf(pCppFile, "\t\tif(-1 == poNetData->%s(pstOut->%s[i]))\r\n\t\t\treturn -1;\r\n\t}\r\n\r\n", strEnFuncName.c_str(), strName.c_str());
                 }
-                else
-                {
-                    fprintf(pCppFile, "\tfor(int i = 0; i < %s; i++)\r\n\t{\r\n", strCount.c_str());
-                    if (!strRefer.empty())
-                    {
-                        fprintf(pCppFile, "\t\tif(i >= (int)pstOut->%s)\r\n\t\t\tbreak;\r\n", strRefer.c_str());
-                    }
 
-                    fprintf(pCppFile, "\t\tif(-1 == DeCode%s(&pstOut->%s[i], poNetData))\r\n\t\t\treturn -1;\r\n\t}\r\n\r\n", strType.c_str(), strName.c_str());
+                if (!strCount.empty())
+                {
+                    if (__IsKeyType(strType))
+                    {
+                        if (strRefer.empty())
+                        {
+                            fprintf(pCppFile, "\t{\r\n\t\tint iCount = %s;\r\n\t\tif(iCount < 0)\r\n\t\t\treturn -1;\r\n", strCount.c_str());
+                        }
+                        else
+                        {
+                            fprintf(pCppFile, "\t{\r\n\t\tint iCount = (((%s) < ((int)pstOut->%s)) ? (%s) : ((int)pstOut->%s));\r\n\t\tif(iCount < 0)\r\n\t\t\treturn -1;\r\n", strCount.c_str(), strRefer.c_str(), strCount.c_str(), strRefer.c_str());
+                        }
+
+                        std::string strCStyle = "";
+
+                        if (strType == "uint8")
+                        {
+                            strCStyle = "unsigned char";
+                        }
+                        else if (strType == "int8")
+                        {
+                            strCStyle = "char";
+                        }
+                        else if (strType == "uint16")
+                        {
+                            strCStyle = "unsigned short";
+                        }
+                        else if (strType == "int16")
+                        {
+                            strCStyle = "short";
+                        }
+                        else if (strType == "uint32")
+                        {
+                            strCStyle = "unsigned int";
+                        }
+                        else if (strType == "int32")
+                        {
+                            strCStyle = "int";
+                        }
+                        else if (strType == "uint64")
+                        {
+                            strCStyle = "unsigned long long";
+                        }
+                        else if (strType == "int64")
+                        {
+                            strCStyle = "signed long long";
+                        }
+
+                        fprintf(pCppFile, "\t\tif(-1 == poNetData->DelBlob((char*)pstOut->%s, iCount*sizeof(%s)))\r\n\t\t\treturn -1;\r\n\t}\r\n", strName.c_str(), strCStyle.c_str());
+                    }
+                    else
+                    {
+                        fprintf(pCppFile, "\tfor(int i = 0; i < %s; i++)\r\n\t{\r\n", strCount.c_str());
+                        if (!strRefer.empty())
+                        {
+                            fprintf(pCppFile, "\t\tif(i >= (int)pstOut->%s)\r\n\t\t\tbreak;\r\n", strRefer.c_str());
+                        }
+
+                        fprintf(pCppFile, "\t\tif(-1 == DeCode%s(&pstOut->%s[i], poNetData))\r\n\t\t\treturn -1;\r\n\t}\r\n\r\n", strType.c_str(), strName.c_str());
+                    }
                 }
             }
         }

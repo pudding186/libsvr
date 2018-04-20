@@ -19,7 +19,8 @@ enum EATTRIB
     eId,
     eSelect,
     eLength,
-    eComment
+    eComment,
+    eArray
 };
 
 typedef std::set<std::string> CDataSet;
