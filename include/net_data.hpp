@@ -16,6 +16,7 @@ public:
         m_size = 0;
         m_capacity = 0;
         m_array = 0;
+        reserve(2);
     }
 
     ~DataArray()
@@ -24,6 +25,8 @@ public:
         {
             S_FREE(m_array);
             m_array = 0;
+            m_size = 0;
+            m_capacity = 0;
         }
     }
 
@@ -100,8 +103,7 @@ public:
         }
         else
         {
-            U new_capacity = m_capacity + m_capacity / 2;
-            if (new_capacity < m_capacity || new_capacity < m_capacity / 2)
+            if (std::numeric_limits<U>::max() - m_capacity < m_capacity/2)
             {
                 if (m_capacity == std::numeric_limits<U>::max())
                 {
@@ -109,16 +111,25 @@ public:
                     *p = 'a';
                 }
                 else
+                {
                     m_capacity = std::numeric_limits<U>::max();
+                }
             }
             else
-                m_capacity = new_capacity;
+            {
+                m_capacity += m_capacity / 2;
+            }
 
 
             m_array = (T*)S_REALLOC(m_array, sizeof(T)*m_capacity);
             memcpy(m_array + m_size, &val, sizeof(T));
             m_size++;
         }
+    }
+
+    void clear()
+    {
+        m_size = 0;
     }
 
     inline U size(void)
@@ -146,6 +157,7 @@ public:
         m_size = 0;
         m_capacity = 0;
         m_array = 0;
+        reserve(2);
     }
 
     ~DataArray()
@@ -160,6 +172,8 @@ public:
 
             S_FREE(m_array);
             m_array = 0;
+
+            m_capacity = 0;
         }
     }
 
@@ -286,8 +300,7 @@ public:
         }
         else
         {
-            U new_capacity = m_capacity + m_capacity / 2;
-            if (new_capacity < m_capacity || new_capacity < m_capacity / 2)
+            if (std::numeric_limits<U>::max() - m_capacity < m_capacity / 2)
             {
                 if (m_capacity == std::numeric_limits<U>::max())
                 {
@@ -295,10 +308,14 @@ public:
                     *p = 'a';
                 }
                 else
+                {
                     m_capacity = std::numeric_limits<U>::max();
+                }
             }
             else
-                m_capacity = new_capacity;
+            {
+                m_capacity += m_capacity / 2;
+            }
 
             T* new_array = (T*)S_MALLOC(sizeof(T)*m_capacity);
             for (U i = 0; i < m_size; i++)
@@ -311,6 +328,18 @@ public:
 
             S_FREE(m_array);
             m_array = new_array;
+        }
+    }
+
+    void clear()
+    {
+        if (m_array)
+        {
+            for (U i = 0; i < m_size; i++)
+            {
+                (m_array + i)->~T();
+            }
+            m_size = 0;
         }
     }
 
