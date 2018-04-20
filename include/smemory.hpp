@@ -9,6 +9,9 @@
 #else
 #define S_NEW(type, size) SMemory::New<type>(size)
 #define S_DELETE(ptr) SMemory::Delete(ptr)
+#define S_MALLOC(size) SMemory::IClassMemory::Alloc(size)
+#define S_REALLOC(mem, size) SMemory::IClassMemory::Realloc(mem, size)
+#define S_FREE(mem) SMemory::IClassMemory::Free(mem)
 #endif
 
 #define REP_DEL_SIG 0xa1b2c3d4
@@ -28,6 +31,26 @@ namespace SMemory
         bool IsValidPtr(void* ptr);
 
         inline const char* Name(){return name;}
+
+        inline static void* Alloc(size_t mem_size)
+        {
+            return memory_manager_alloc(def_mem_mgr, mem_size);
+        }
+
+        inline static void* Realloc(void* old_mem, size_t new_size)
+        {
+            return memory_manager_realloc(def_mem_mgr, old_mem, new_size);
+        }
+
+        inline static void Free(void* mem)
+        {
+            memory_manager_free(def_mem_mgr, mem);
+        }
+        inline static bool IsValidMem(void* mem)
+        {
+            return memory_manager_check(def_mem_mgr, mem);
+        }
+
     protected:
         const char*         name;
         HMEMORYUNIT         unit;
@@ -279,8 +302,7 @@ namespace SMemory
 
         pointer allocate(size_type num, const void* hint= 0)
         {
-            __declspec(thread) static CClassMemory< T, std::true_type> class_memory;
-            return (pointer)(class_memory.New(num));
+            return (pointer)S_MALLOC(sizeof(value_type)*num);
         }
 
         void construct(pointer p,const_reference value)
@@ -295,7 +317,7 @@ namespace SMemory
 
         void deallocate( pointer p, size_type size )
         {
-            Delete(p);
+            S_FREE(p);
         }
 
         bool operator==(Allocator const& a) const 
