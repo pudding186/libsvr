@@ -1,16 +1,14 @@
 #pragma once
 #include "smemory.hpp"
 
-#define NEAR_LARGE(m,n) ((m+n-1)/n*n)
-
-template<typename T, typename POD = std::is_pod<T>::type>
+template< typename T, typename U = size_t, typename POD = std::is_pod<T>::type, typename UINT = std::is_unsigned<U>::type >
 class DataArray
 {
 
 };
 
-template <typename T>
-class DataArray<T, std::true_type>
+template <typename T, typename U>
+class DataArray<T, U, std::true_type, std::true_type>
 {
 public:
     DataArray(void)
@@ -18,7 +16,6 @@ public:
         m_size = 0;
         m_capacity = 0;
         m_array = 0;
-        reserve(m_grow_size);
     }
 
     ~DataArray()
@@ -32,7 +29,7 @@ public:
 
     DataArray(const DataArray& src)
     {
-        m_capacity = NEAR_LARGE(src.m_capacity, m_grow_size);
+        m_capacity = src.m_capacity;
 
         m_size = src.m_size;
         m_array = (T*)S_MALLOC(sizeof(T)*m_capacity);
@@ -43,7 +40,7 @@ public:
     {
         if (m_capacity < src.m_size)
         {
-            m_capacity = NEAR_LARGE(src.m_capacity, m_grow_size);
+            m_capacity = src.m_capacity;
 
             if (m_array)
             {
@@ -59,7 +56,7 @@ public:
         return *this;
     }
 
-    T& operator[](size_t idx)
+    T& operator[](U idx)
     {
         if (idx < m_size)
         {
@@ -73,22 +70,22 @@ public:
         }
     }
 
-    void resize(size_t new_size)
+    void resize(U new_size)
     {
         if (new_size > m_capacity)
         {
-            m_capacity = NEAR_LARGE(new_size, m_grow_size);
+            m_capacity = new_size;
 
             m_array = (T*)S_REALLOC(m_array, sizeof(T)*m_capacity);
         }
         m_size = new_size;
     }
 
-    void reserve(size_t new_size)
+    void reserve(U new_size)
     {
         if (new_size > m_capacity)
         {
-            m_capacity = NEAR_LARGE(new_size, m_grow_size);
+            m_capacity = new_size;
 
             m_array = (T*)S_REALLOC(m_array, sizeof(T)*m_capacity);
         }
@@ -103,32 +100,45 @@ public:
         }
         else
         {
-            m_capacity = NEAR_LARGE(m_capacity + m_capacity / 2, m_grow_size);
+            U new_capacity = m_capacity + m_capacity / 2;
+            if (new_capacity < m_capacity || new_capacity < m_capacity / 2)
+            {
+                if (m_capacity == std::numeric_limits<U>::max())
+                {
+                    char* p = 0;
+                    *p = 'a';
+                }
+                else
+                    m_capacity = std::numeric_limits<U>::max();
+            }
+            else
+                m_capacity = new_capacity;
+
+
             m_array = (T*)S_REALLOC(m_array, sizeof(T)*m_capacity);
             memcpy(m_array + m_size, &val, sizeof(T));
             m_size++;
         }
     }
 
-    inline size_t size(void)
+    inline U size(void)
     {
         return m_size;
     }
 
-    inline size_t capacity(void)
+    inline U capacity(void)
     {
         return m_capacity;
     }
 
 private:
-    size_t  m_size;
-    size_t  m_capacity;
-    T*      m_array;
-    static const size_t m_grow_size = 1024 / sizeof(T);
+    U   m_size;
+    U   m_capacity;
+    T*  m_array;
 };
 
-template <typename T>
-class DataArray<T, std::false_type>
+template <typename T, typename U>
+class DataArray<T, U, std::false_type, std::true_type>
 {
 public:
     DataArray(void)
@@ -136,14 +146,13 @@ public:
         m_size = 0;
         m_capacity = 0;
         m_array = 0;
-        reserve(m_grow_size);
     }
 
     ~DataArray()
     {
         if (m_array)
         {
-            for (size_t i = 0; i < m_size; i++)
+            for (U i = 0; i < m_size; i++)
             {
                 (m_array + i)->~T();
             }
@@ -156,11 +165,11 @@ public:
 
     DataArray(const DataArray& src)
     {
-        m_capacity = NEAR_LARGE(src.m_capacity, m_grow_size);
+        m_capacity = src.m_capacity;
         m_size = src.m_size;
 
         m_array = S_MALLOC(sizeof(T)*m_capacity);
-        for (size_t i = 0; i < m_size; i++)
+        for (U i = 0; i < m_size; i++)
         {
             new(m_array + i)T(src.m_array[i]);
         }
@@ -168,7 +177,7 @@ public:
 
     DataArray& operator= (const DataArray& src)
     {
-        for (size_t i = 0; i < m_size; i++)
+        for (U i = 0; i < m_size; i++)
         {
             (m_array + i)->~T();
         }
@@ -176,7 +185,7 @@ public:
 
         if (m_capacity < src.m_size)
         {
-            m_capacity = NEAR_LARGE(src.m_capacity, m_grow_size);
+            m_capacity = src.m_capacity;
 
             if (m_array)
             {
@@ -188,7 +197,7 @@ public:
 
         m_size = src.m_size;
 
-        for (size_t i = 0; i < m_size; i++)
+        for (U i = 0; i < m_size; i++)
         {
             new(m_array + i)T(src.m_array[i]);
         }
@@ -196,7 +205,7 @@ public:
         return *this;
     }
 
-    T& operator[](size_t idx)
+    T& operator[](U idx)
     {
         if (idx < m_size)
         {
@@ -210,7 +219,7 @@ public:
         }
     }
 
-    void resize(size_t new_size)
+    void resize(U new_size)
     {
         if (new_size < m_size)
         {
@@ -230,9 +239,10 @@ public:
         }
         else
         {
-            m_capacity = NEAR_LARGE(new_size, m_grow_size);
+            m_capacity = new_size;
+
             T* new_array = (T*)S_MALLOC(sizeof(T)*m_capacity);
-            for (size_t i = 0; i < m_size; i++)
+            for (U i = 0; i < m_size; i++)
             {
                 new(new_array + i)T(m_array[i]);
                 (m_array + i)->~T();
@@ -241,7 +251,7 @@ public:
             S_FREE(m_array);
             m_array = new_array;
 
-            for (size_t i = m_size; i < m_capacity; i++)
+            for (U i = m_size; i < m_capacity; i++)
             {
                 new(m_array + i)T();
             }
@@ -249,13 +259,14 @@ public:
         }
     }
 
-    void reserve(size_t new_size)
+    void reserve(U new_size)
     {
         if (new_size > m_capacity)
         {
-            m_capacity = NEAR_LARGE(new_size, m_grow_size);
+            m_capacity = new_size;
+
             T* new_array = (T*)S_MALLOC(sizeof(T)*m_capacity);
-            for (size_t i = 0; i < m_size; i++)
+            for (U i = 0; i < m_size; i++)
             {
                 new(new_array + i)T(m_array[i]);
                 (m_array + i)->~T();
@@ -275,9 +286,22 @@ public:
         }
         else
         {
-            m_capacity = NEAR_LARGE(m_capacity + m_capacity / 2, m_grow_size);
+            U new_capacity = m_capacity + m_capacity / 2;
+            if (new_capacity < m_capacity || new_capacity < m_capacity / 2)
+            {
+                if (m_capacity == std::numeric_limits<U>::max())
+                {
+                    char* p = 0;
+                    *p = 'a';
+                }
+                else
+                    m_capacity = std::numeric_limits<U>::max();
+            }
+            else
+                m_capacity = new_capacity;
+
             T* new_array = (T*)S_MALLOC(sizeof(T)*m_capacity);
-            for (size_t i = 0; i < m_size; i++)
+            for (U i = 0; i < m_size; i++)
             {
                 new(new_array + i)T(m_array[i]);
                 (m_array + i)->~T();
@@ -290,22 +314,21 @@ public:
         }
     }
 
-    inline size_t size(void)
+    inline U size(void)
     {
         return m_size;
     }
 
-    inline size_t capacity(void)
+    inline U capacity(void)
     {
         return m_capacity;
     }
 
 protected:
 private:
-    size_t  m_size;
-    size_t  m_capacity;
-    T*      m_array;
-    static const size_t m_grow_size = 1024 / sizeof(T);
+    U   m_size;
+    U   m_capacity;
+    T*  m_array;
 };
 
 class CNetData
