@@ -1,8 +1,8 @@
-#ifdef WIN32
-#include <WinSock2.h>
-#else
-#include <string.h>
-#endif
+//#ifdef WIN32
+//#include <WinSock2.h>
+//#else
+//#include <string.h>
+//#endif
 
 #include "../include/net_data.hpp"
 
