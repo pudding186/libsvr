@@ -103,16 +103,16 @@ public:
         }
         else
         {
-            if (std::numeric_limits<U>::max() - m_capacity < m_capacity/2)
+            if ((std::numeric_limits<U>::max)() - m_capacity < m_capacity/2)
             {
-                if (m_capacity == std::numeric_limits<U>::max())
+                if (m_capacity == (std::numeric_limits<U>::max)())
                 {
                     char* p = 0;
                     *p = 'a';
                 }
                 else
                 {
-                    m_capacity = std::numeric_limits<U>::max();
+                    m_capacity = (std::numeric_limits<U>::max)();
                 }
             }
             else
@@ -300,16 +300,16 @@ public:
         }
         else
         {
-            if (std::numeric_limits<U>::max() - m_capacity < m_capacity / 2)
+            if ((std::numeric_limits<U>::max)() - m_capacity < m_capacity / 2)
             {
-                if (m_capacity == std::numeric_limits<U>::max())
+                if (m_capacity == (std::numeric_limits<U>::max)())
                 {
                     char* p = 0;
                     *p = 'a';
                 }
                 else
                 {
-                    m_capacity = std::numeric_limits<U>::max();
+                    m_capacity = (std::numeric_limits<U>::max)();
                 }
             }
             else
