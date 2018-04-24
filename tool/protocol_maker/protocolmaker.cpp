@@ -440,9 +440,9 @@ bool CProtocolMaker::__WriteData( FILE* pHppFile, CMarkupSTL& rXml )
                 m_strErrorInfo += " 重定义";
                 return false;
             }
-            fprintf(pHppFile, "struct %s{\r\n", strName.c_str());
-            fprintf(pHppFile,"\tconst %-*s moudleid;\r\n", 19, "unsigned short");
-            fprintf(pHppFile,"\tconst %-*s protocolid;\r\n", 19, "unsigned short");
+            fprintf(pHppFile, "struct %s:protocol_head{\r\n", strName.c_str());
+            //fprintf(pHppFile,"\tconst %-*s moudleid;\r\n", 19, "unsigned short");
+            //fprintf(pHppFile,"\tconst %-*s protocolid;\r\n", 19, "unsigned short");
             eDataType = eProtocol;
         }
         else
@@ -507,8 +507,9 @@ bool CProtocolMaker::__WriteData( FILE* pHppFile, CMarkupSTL& rXml )
         }
         else if (strType == "protocol")
         {
-            fprintf(pHppFile, "\t%s():moudleid(%s),protocolid(%d){}\r\n", strName.c_str(), m_strMoudleID.c_str(), m_vecProtocol.size());
-            //fprintf(pHppFile, "\tprotocol_%s():protocolid(%d){}\r\n", strName.c_str(), m_vecProtocol.size());
+            //fprintf(pHppFile, "\t%s():moudleid(%s),protocolid(%d){}\r\n", strName.c_str(), m_strMoudleID.c_str(), m_vecProtocol.size());
+            fprintf(pHppFile, "\t%s():protocol_head(%s, %d){}\r\n", strName.c_str(), m_strMoudleID.c_str(), m_vecProtocol.size());
+
             m_mapStruct[strName] = mapItem;
             m_mapProtocol[strName] = mapItem;
             m_vecProtocol.push_back(strName);
@@ -940,11 +941,11 @@ bool CProtocolMaker::__WriteStructProtocolEnCodeFunc( CMarkupSTL& rXml, FILE* pH
     fprintf(pHppFile, "int EnCode%s(void* pHost, CNetData* poNetData);\r\n", strName.c_str());
     fprintf(pCppFile, "int EnCode%s(void* pHost, CNetData* poNetData)\r\n{\r\n", strName.c_str());
     fprintf(pCppFile, "\t%s* pstIn = (%s*)pHost;\r\n\r\n", strName.c_str(), strName.c_str());
-    if (bProtocol)
-    {
-        fprintf(pCppFile, "\tif(-1==poNetData->AddWord(pstIn->moudleid))\r\n\t\treturn -1;\r\n\r\n");
-        fprintf(pCppFile, "\tif(-1==poNetData->AddWord(pstIn->protocolid))\r\n\t\treturn -1;\r\n\r\n");
-    }
+    //if (bProtocol)
+    //{
+    //    fprintf(pCppFile, "\tif(-1==poNetData->AddWord(pstIn->moudle_id))\r\n\t\treturn -1;\r\n\r\n");
+    //    fprintf(pCppFile, "\tif(-1==poNetData->AddWord(pstIn->protocol_id))\r\n\t\treturn -1;\r\n\r\n");
+    //}
     rXml.IntoElem();
     while (rXml.FindElem("item"))
     {
@@ -1186,11 +1187,11 @@ bool CProtocolMaker::__WriteStructProtocolDeCodeFunc( CMarkupSTL& rXml, FILE* pH
     fprintf(pHppFile, "int DeCode%s(void* pHost, CNetData* poNetData);\r\n", strName.c_str());
     fprintf(pCppFile, "int DeCode%s(void* pHost, CNetData* poNetData)\r\n{\r\n", strName.c_str());
     fprintf(pCppFile, "\t%s* pstOut = (%s*)pHost;\r\n\r\n", strName.c_str(), strName.c_str());
-    if (bProtocol)
-    {
-        fprintf(pCppFile, "\tif(-1==poNetData->DelWord((unsigned short&)pstOut->moudleid))\r\n\t\treturn -1;\r\n\r\n");
-        fprintf(pCppFile, "\tif(-1==poNetData->DelWord((unsigned short&)pstOut->protocolid))\r\n\t\treturn -1;\r\n\r\n");
-    }
+    //if (bProtocol)
+    //{
+    //    fprintf(pCppFile, "\tif(-1==poNetData->DelWord((unsigned short&)pstOut->moudleid))\r\n\t\treturn -1;\r\n\r\n");
+    //    fprintf(pCppFile, "\tif(-1==poNetData->DelWord((unsigned short&)pstOut->protocolid))\r\n\t\treturn -1;\r\n\r\n");
+    //}
     rXml.IntoElem();
     while (rXml.FindElem("item"))
     {
@@ -1472,6 +1473,11 @@ bool CProtocolMaker::__WriteUnionDeCodeFunc( CMarkupSTL& rXml, FILE* pHppFile, F
 
 bool CProtocolMaker::__WriteProtocolClass( const std::string& strProtocolName, FILE* pHppFile, FILE* pCppFile )
 {
+    if (m_vecProtocol.empty())
+    {
+        return true;
+    }
+
     fprintf(pHppFile, "typedef int (*EnCodeFunc%s)(void *pHost, CNetData* poNetData);\r\ntypedef int (*DeCodeFunc%s)(void *pHost, CNetData* poNetData);\r\n\r\n", strProtocolName.c_str(), strProtocolName.c_str());
     fprintf(pHppFile, "class C%s\r\n{\r\npublic:\r\n\tC%s();\r\n\t~C%s();\r\n", strProtocolName.c_str(), strProtocolName.c_str(), strProtocolName.c_str());
     //添加成员函数
@@ -1487,18 +1493,23 @@ bool CProtocolMaker::__WriteProtocolClass( const std::string& strProtocolName, F
     {
         fprintf(pHppFile, "\tvirtual void OnRecv_%s(%s& rstProtocol){ rstProtocol; };\r\n", m_vecProtocol[i].c_str(), m_vecProtocol[i].c_str());
     }
-    fprintf(pHppFile, "private:\r\n\tEnCodeFunc%s m_EnCodeFuncArray[%d];\r\n\tEnCodeFunc%s m_DeCodeFuncArray[%d];\r\n};\r\n", strProtocolName.c_str(), m_mapProtocol.size(), strProtocolName.c_str(), m_mapProtocol.size());
+    fprintf(pHppFile, "private:\r\n\tEnCodeFunc%s m_EnCodeFuncArray[%d];\r\n\tEnCodeFunc%s m_DeCodeFuncArray[%d];\r\n\tchar* m_EnCodeBuffer;\r\n\tchar* m_DeCodeBuffer;\r\n\tsize_t m_EnCodeBufferSize;\r\n\tsize_t m_DeCodeBufferSize;\r\n};\r\n", strProtocolName.c_str(), m_mapProtocol.size(), strProtocolName.c_str(), m_mapProtocol.size());
 
     //构造函数
     fprintf(pCppFile, "C%s::C%s()\r\n{\r\n", strProtocolName.c_str(), strProtocolName.c_str());
+    fprintf(pCppFile, "\tsize_t max_protocol_size = 0;\r\n");
     for (int i = 0; i < (int)m_vecProtocol.size(); i++)
     {
         fprintf(pCppFile, "\tm_EnCodeFuncArray[%d] = &EnCode%s;\r\n", i, m_vecProtocol[i].c_str());
-        fprintf(pCppFile, "\tm_DeCodeFuncArray[%d] = &DeCode%s;\r\n\r\n", i, m_vecProtocol[i].c_str());
+        fprintf(pCppFile, "\tm_DeCodeFuncArray[%d] = &DeCode%s;\r\n", i, m_vecProtocol[i].c_str());
+        fprintf(pCppFile, "\tif (max_protocol_size < sizeof(%s))\r\n\t\tmax_protocol_size = sizeof(%s);\r\n\r\n", m_vecProtocol[i].c_str(), m_vecProtocol[i].c_str());
     }
+    fprintf(pCppFile, "\tm_EnCodeBuffer = (char*)S_MALLOC(max_protocol_size);\r\n\tm_DeCodeBuffer = (char*)S_MALLOC(max_protocol_size);\r\n");
+    fprintf(pCppFile, "\tm_EnCodeBufferSize = max_protocol_size;\r\n\tm_DeCodeBufferSize = max_protocol_size;\r\n");
+
     fprintf(pCppFile, "}\r\n\r\n");
     //析构函数
-    fprintf(pCppFile, "C%s::~C%s()\r\n{\r\n}\r\n\r\n", strProtocolName.c_str(), strProtocolName.c_str());
+    fprintf(pCppFile, "C%s::~C%s()\r\n{\r\n\tif (m_EnCodeBuffer)\r\n\t{\r\n\t\tS_FREE(m_EnCodeBuffer);\r\n\t}\r\n\r\n\tif (m_DeCodeBuffer)\r\n\t{\r\n\t\tS_FREE(m_DeCodeBuffer);\r\n\t}\r\n}\r\n\r\n", strProtocolName.c_str(), strProtocolName.c_str());
 
     //构建协议函数
     fprintf(pCppFile, "int C%s::BuildProtocol(void* pHost, char *pNet, int iNetSize)\r\n{\r\n", strProtocolName.c_str());
