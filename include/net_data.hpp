@@ -1,14 +1,14 @@
 #pragma once
 #include "smemory.hpp"
 
-template< typename T, typename U = size_t, typename POD = std::is_pod<T>::type, typename UINT = std::is_unsigned<U>::type >
+template< typename T, typename U = size_t, bool is_pod = std::is_pod<T>::value, bool is_unsigned = std::is_unsigned<U>::value >
 class DataArray
 {
 
 };
 
 template <typename T, typename U>
-class DataArray<T, U, std::true_type, std::true_type>
+class DataArray<T, U, true, true>
 {
 public:
     DataArray(void)
@@ -127,7 +127,7 @@ public:
         }
     }
 
-    void clear()
+    inline void clear()
     {
         m_size = 0;
     }
@@ -137,10 +137,20 @@ public:
         return m_size;
     }
 
+	inline size_t size_of_data(void)
+	{
+		return sizeof(T);
+	}
+
     inline U capacity(void)
     {
         return m_capacity;
     }
+
+	inline T* data(void)
+	{
+		return m_array;
+	}
 
 private:
     U   m_size;
@@ -149,7 +159,7 @@ private:
 };
 
 template <typename T, typename U>
-class DataArray<T, U, std::false_type, std::true_type>
+class DataArray<T, U, false, true>
 {
 public:
     DataArray(void)
@@ -348,10 +358,20 @@ public:
         return m_size;
     }
 
+	inline size_t size_of_data(void)
+	{
+		return sizeof(T);
+	}
+
     inline U capacity(void)
     {
         return m_capacity;
     }
+
+	inline T* data(void)
+	{
+		return m_array;
+	}
 
 protected:
 private:
@@ -360,51 +380,319 @@ private:
     T*  m_array;
 };
 
-class CNetData
+
+class NetEnCode
 {
 public:
-    CNetData();
-    virtual ~CNetData();
+	NetEnCode(size_t reserve_size)
+	{
+		m_buffer = (char*)S_MALLOC(reserve_size);
+		m_pos = 0;
+		m_size = reserve_size;
+	}
+	~NetEnCode()
+	{
+		if (m_buffer)
+		{
+			S_FREE(m_buffer);
+		}
+		m_buffer = 0;
+		m_size = 0;
+		m_pos = 0;
+	}
 
-    void Prepare(char *pNetData, int iSize);
-    void Reset();
+	template<typename T>
+	typename std::enable_if<std::is_integral<T>::value, size_t>::type AddIntegral(T var)
+	{
+		if (m_size - m_pos < sizeof(T))
+		{
+			if ((std::numeric_limits<size_t>::max)() - m_size < m_size / 2)
+			{
+				if (m_size == (std::numeric_limits<size_t>::max)())
+				{
+					char* p = 0;
+					*p = 'a';
+				}
+				else
+				{
+					m_size = (std::numeric_limits<size_t>::max)();
+				}
+			}
+			else
+			{
+				for (;;)
+				{
+					m_size += m_size / 2;
+					if (m_size - m_pos >= sizeof(T))
+					{
+						break;
+					}
 
-    char * GetData();
-    int GetDataLen();
+					if ((std::numeric_limits<size_t>::max)() - m_size < m_size / 2)
+					{
+						char* p = 0;
+						*p = 'a';
+					}
+				}
+			}
 
-    int AddByte(unsigned char byByte);
-    int DelByte(unsigned char &byByte);
+			m_buffer = (char*)S_REALLOC(m_buffer, m_size);
+		}
 
-    int AddChar(char chChar);
-    int DelChar(char &chChar);
+		*(T*)(m_buffer + m_pos) = var;
+		m_pos += sizeof(T);
 
-    int AddWord(unsigned short wWord);
-    int DelWord(unsigned short &wWord);
+		return m_pos;
+	}
 
-    int AddShort(short shShort);
-    int DelShort(short &shShort);
+	template<typename T, typename U>
+	typename std::enable_if<std::is_pod<T>::value, size_t>::type AddArray(DataArray<T, U>& array)
+	{
+		AddIntegral(array.size());
 
-    int AddDword(unsigned int dwDword);
-    int DelDword(unsigned int &dwDword);
+		AddBlob((const char*)array.data(), array.size()*array.size_of_data());
 
-    int AddInt(int iInt);
-    int DelInt(int &iInt);
+		return m_pos;
+	}
 
-    int AddInt64(signed long long iInt64);
-    int DelInt64(signed long long &iInt64);
+	template<typename T, typename U>
+	typename std::enable_if<!std::is_pod<T>::value, size_t>::type AddArray(DataArray<T, U>& array)
+	{
+		AddIntegral(array.size());
 
-    int AddQword(unsigned long long qwQword);
-    int DelQword(unsigned long long &qwQword);
+		for (U i = 0; i < array.size(); i++)
+		{
+			array[i].EnCode(*this);
+		}
 
-    int AddString(const char *pszString, int iSize);
-    int DelString(char *pszOut, int iSize);
+		return m_pos;
+	}
 
-    int AddBlob(const char *pszData, int iSize);
-    int DelBlob(char *pszOut, int iSize);
+	size_t AddString(const char* str, size_t max_str_size)
+	{
+		size_t str_len = strnlen(str, max_str_size - 1);
+
+		if (m_size - m_pos < str_len + sizeof(unsigned short))
+		{
+			if ((std::numeric_limits<size_t>::max)() - m_size < m_size / 2)
+			{
+				if (m_size == (std::numeric_limits<size_t>::max)())
+				{
+					char* p = 0;
+					*p = 'a';
+				}
+				else
+				{
+					m_size = (std::numeric_limits<size_t>::max)();
+				}
+			}
+			else
+			{
+				for (;;)
+				{
+					m_size += m_size / 2;
+					if (m_size - m_pos >= str_len + sizeof(unsigned short))
+					{
+						break;
+					}
+
+					if ((std::numeric_limits<size_t>::max)() - m_size < m_size / 2)
+					{
+						char* p = 0;
+						*p = 'a';
+					}
+				}
+			}
+
+			m_buffer = (char*)S_REALLOC(m_buffer, m_size);
+		}
+
+		if (str_len > (std::numeric_limits<unsigned short>::max)())
+		{
+			str_len = (std::numeric_limits<unsigned short>::max)();
+		}
+
+		AddIntegral((unsigned short)str_len);
+
+		memcpy(m_buffer + m_pos, str, str_len);
+		m_pos += str_len;
+
+		return m_pos;
+	}
+
+	size_t AddBlob(const char* data, size_t data_size)
+	{
+		if (m_size - m_pos < data_size)
+		{
+			if ((std::numeric_limits<size_t>::max)() - m_size < m_size / 2)
+			{
+				if (m_size == (std::numeric_limits<size_t>::max)())
+				{
+					char* p = 0;
+					*p = 'a';
+				}
+				else
+				{
+					m_size = (std::numeric_limits<size_t>::max)();
+				}
+			}
+			else
+			{
+				for (;;)
+				{
+					m_size += m_size / 2;
+					if (m_size - m_pos >= data_size)
+					{
+						break;
+					}
+
+					if ((std::numeric_limits<size_t>::max)() - m_size < m_size / 2)
+					{
+						char* p = 0;
+						*p = 'a';
+					}
+				}
+			}
+
+			m_buffer = (char*)S_REALLOC(m_buffer, m_size);
+		}
+
+		memcpy(m_buffer + m_pos, data, data_size);
+
+		m_pos += data_size;
+
+		return m_pos;
+	}
+
+	inline char* Data()
+	{
+		return m_buffer;
+	}
+
+	inline size_t Length()
+	{
+		return m_pos;
+	}
+protected:
+private:
+	char*		m_buffer;
+	size_t		m_size;
+	size_t      m_pos;
+};
+
+class NetDeCode
+{
+public:
+	NetDeCode(const char* data, size_t data_len)
+	{
+		m_buffer = data;
+		m_size = data_len;
+		m_pos = 0;
+	}
+	~NetDeCode()
+	{
+		m_buffer = 0;
+		m_size = 0;
+		m_pos = 0;
+	}
+
+	template<typename T>
+	typename std::enable_if<std::is_integral<T>::value, size_t>::type DelIntegral(T& var)
+	{
+		if (m_size - m_pos < sizeof(T))
+			return 0;
+		var = *(T*)(m_buffer + m_pos);
+		m_pos += sizeof(T);
+
+		return m_pos;
+	}
+
+	template<typename T, typename U>
+	typename std::enable_if<std::is_pod<T>::value, size_t>::type DelArray(DataArray<T, U>& array)
+	{
+		U array_size = 0;
+		if (!DelIntegral(array_size))
+			return 0;
+
+		array.resize(array_size);
+
+		if (!DelBlob((char*)array.data(), array.size()*array.size_of_data()))
+			return 0;
+
+		return m_pos;
+	}
+
+	template<typename T, typename U>
+	typename std::enable_if<!std::is_pod<T>::value, size_t>::type DelArray(DataArray<T, U>& array)
+	{
+		U array_size = 0;
+		if (!DelIntegral(array_size))
+			return 0;
+
+		array.resize(array_size);
+
+		for (U i = 0; i < array_size; i++)
+		{
+			if (!array[i].DeCode(*this))
+			{
+				return 0;
+			}
+		}
+
+		return m_pos;
+	}
+
+	size_t DelString(char* str, size_t max_str_size)
+	{
+		unsigned short w_len = 0;
+		size_t str_len = 0;
+
+		if (!DelIntegral(w_len))
+			return 0;
+
+		str_len = w_len;
+
+		if (m_size - m_pos < str_len)
+			return 0;
+
+		if (str_len + 1 > max_str_size)
+			return 0;
+
+		memcpy(str, m_buffer + m_pos, str_len);
+		str[str_len] = '\0';
+		m_pos += str_len;
+
+		return m_pos;
+	}
+
+	size_t DelBlob(char* data, size_t data_size)
+	{
+		if (m_size - m_pos < data_size)
+			return 0;
+
+		memcpy(data, m_buffer + m_pos, data_size);
+		m_pos += data_size;
+
+		return m_pos;
+	}
 
 protected:
-    char * m_pBuf;
-    int m_iSize;
-    int m_iPos;
+private:
+	const char*	m_buffer;
+	size_t		m_size;
+	size_t      m_pos;
 };
+
+
+struct protocol_base 
+{
+    const unsigned short module_id;
+    const unsigned short protocol_id;
+	protocol_base( unsigned short m_id,
+        unsigned short p_id):
+        module_id(m_id), protocol_id(p_id){}
+	virtual bool EnCode(NetEnCode& net_data) = 0;
+	virtual bool DeCode(NetDeCode& net_data) = 0;
+};
+
 
