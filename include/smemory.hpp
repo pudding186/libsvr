@@ -58,7 +58,7 @@ namespace SMemory
         __declspec(thread) static HMEMORYMANAGER def_mem_mgr;
     };
 
-    template <typename T, typename POD>
+    template <typename T, bool is_pod = std::is_pod<T>::value>
     class CClassMemory
         :public IClassMemory
     {
@@ -68,18 +68,18 @@ namespace SMemory
     };
 
     template <typename T>
-    class CClassMemory<T, std::false_type>
+    class CClassMemory<T, false>
         :public IClassMemory
     {
     public:
 
-        CClassMemory<T, std::false_type>(void)
+        CClassMemory<T, false>(void)
         {
             name = typeid(T).name();
             unit = create_memory_unit(sizeof(HMEMORYMANAGER*) + sizeof(IClassMemory**) + sizeof(T));
         }
 
-        ~CClassMemory<T, std::false_type>(void)
+        ~CClassMemory<T, false>(void)
         {
             name = 0;
             destroy_memory_unit(unit);
@@ -155,18 +155,18 @@ namespace SMemory
     };
 
     template <typename T>
-    class CClassMemory<T, std::true_type>
+    class CClassMemory<T, true>
         :public IClassMemory
     {
     public:
 
-        CClassMemory<T, std::true_type>(void)
+        CClassMemory<T, true>(void)
         {
             name = typeid(T).name();
             unit = create_memory_unit(sizeof(HMEMORYMANAGER*) + sizeof(IClassMemory**) + sizeof(T));
         }
 
-        ~CClassMemory<T, std::true_type>(void)
+        ~CClassMemory<T, true>(void)
         {
             name = 0;
             destroy_memory_unit(unit);
@@ -217,9 +217,9 @@ namespace SMemory
     };
 
     template <typename T>
-    inline CClassMemory<T, typename std::is_pod<T>::type>& get_class_memory(void)
+    inline CClassMemory<T>& get_class_memory(void)
     {
-        __declspec(thread) static CClassMemory< T, typename std::is_pod<T>::type> class_memory;
+        __declspec(thread) static CClassMemory<T> class_memory;
         return class_memory;
     }
 
