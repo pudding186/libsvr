@@ -177,9 +177,6 @@
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">CompileAsC</CompileAs>
       <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Level4</WarningLevel>
     </ClCompile>
-    <ClCompile Include="src\net_data.cpp">
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Default</CompileAs>
-    </ClCompile>
     <ClCompile Include="src\rb_tree.c">
       <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Level4</WarningLevel>
     </ClCompile>
@@ -212,7 +209,6 @@
     <ClInclude Include="include\json.h" />
     <ClInclude Include="include\loop_cache.h" />
     <ClInclude Include="include\memory_pool.h" />
-    <ClInclude Include="include\net_data.hpp" />
     <ClInclude Include="include\rb_tree.h" />
     <ClInclude Include="include\share_memory.h" />
     <ClInclude Include="include\smemory.hpp" />
