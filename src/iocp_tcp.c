@@ -296,7 +296,7 @@ void _iocp_tcp_manager_free_memory(HNETMANAGER mgr, void* mem, int buffer_size)
     memory_unit_free((HMEMORYUNIT)rb_node_value(memory_node), mem);
 }
 
-extern HLOOPCACHE create_loop_cache_ex(size_t size, char* data);
+extern HLOOPCACHE create_loop_cache_ex(size_t size, void* data);
 
 HSESSION _iocp_tcp_manager_alloc_socket(HNETMANAGER mgr, int recv_buf_size, int send_buf_size)
 {
@@ -438,7 +438,7 @@ void _push_data_event(HSESSION socket, int data_len)
         size_t evt_len = sizeof(struct st_net_event);
 
         EVENT_LOCK;
-        loop_cache_get_free(socket->mgr->evt_queue, (char**)&evt, &evt_len);
+        loop_cache_get_free(socket->mgr->evt_queue, &evt, &evt_len);
 
         if (evt_len != sizeof(struct st_net_event))
         {
@@ -461,7 +461,7 @@ void _push_establish_event(HLISTENER listener, HSESSION socket)
     struct st_net_event* evt;
     size_t evt_len = sizeof(struct st_net_event);
     EVENT_LOCK;
-    loop_cache_get_free(socket->mgr->evt_queue, (char**)&evt, &evt_len);
+    loop_cache_get_free(socket->mgr->evt_queue, &evt, &evt_len);
 
     if (evt_len != sizeof(struct st_net_event))
     {
@@ -483,7 +483,7 @@ void _push_system_error_event(HSESSION socket, int err_code)
     struct st_net_event* evt;
     size_t evt_len = sizeof(struct st_net_event);
     EVENT_LOCK;
-    loop_cache_get_free(socket->mgr->evt_queue, (char**)&evt, &evt_len);
+    loop_cache_get_free(socket->mgr->evt_queue, &evt, &evt_len);
 
     if (evt_len != sizeof(struct st_net_event))
     {
@@ -505,7 +505,7 @@ void _push_module_error_event(HSESSION socket, int err_code)
     struct st_net_event* evt;
     size_t evt_len = sizeof(struct st_net_event);
     EVENT_LOCK;
-    loop_cache_get_free(socket->mgr->evt_queue, (char**)&evt, &evt_len);
+    loop_cache_get_free(socket->mgr->evt_queue, &evt, &evt_len);
 
     if (evt_len != sizeof(struct st_net_event))
     {
@@ -527,7 +527,7 @@ void _push_terminate_event(HSESSION socket)
     struct st_net_event* evt;
     size_t evt_len = sizeof(struct st_net_event);
     EVENT_LOCK;
-    loop_cache_get_free(socket->mgr->evt_queue, (char**)&evt, &evt_len);
+    loop_cache_get_free(socket->mgr->evt_queue, &evt, &evt_len);
 
     if (evt_len != sizeof(struct st_net_event))
     {
@@ -548,7 +548,7 @@ void _push_connect_fail_event(HSESSION socket, int err_code)
     struct st_net_event* evt;
     size_t evt_len = sizeof(struct st_net_event);
     EVENT_LOCK;
-    loop_cache_get_free(socket->mgr->evt_queue, (char**)&evt, &evt_len);
+    loop_cache_get_free(socket->mgr->evt_queue, &evt, &evt_len);
 
     if (evt_len != sizeof(struct st_net_event))
     {
@@ -572,7 +572,7 @@ void _push_recv_active_event(HSESSION socket)
         struct st_net_event* evt;
         size_t evt_len = sizeof(struct st_net_event);
         EVENT_LOCK;
-        loop_cache_get_free(socket->mgr->evt_queue, (char**)&evt, &evt_len);
+        loop_cache_get_free(socket->mgr->evt_queue, &evt, &evt_len);
 
         if (evt_len != sizeof(struct st_net_event))
         {
@@ -1284,7 +1284,7 @@ bool _proc_net_event(HNETMANAGER mgr)
     struct st_net_event* evt;
     size_t evt_len = sizeof(struct st_net_event);
 
-    loop_cache_get_data(mgr->evt_queue, (char**)&evt, &evt_len);
+    loop_cache_get_data(mgr->evt_queue, &evt, &evt_len);
 
     if (evt_len < sizeof(struct st_net_event))
     {
@@ -2043,7 +2043,7 @@ HLISTENER iocp_tcp_listen(HNETMANAGER mgr,
     return listener;
 }
 
-bool iocp_tcp_send(HSESSION socket, const char* data, int len)
+bool iocp_tcp_send(HSESSION socket, const void* data, int len)
 {
     if (len <= 0)
     {

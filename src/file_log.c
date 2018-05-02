@@ -294,7 +294,7 @@ void _process_log_unit(log_file* log)
 
         cmd = 0;
 
-        if (loop_cache_pop_data(unit->cmd_que, (char*)&cmd, sizeof(log_cmd*)))
+        if (loop_cache_pop_data(unit->cmd_que, &cmd, sizeof(log_cmd*)))
         {
             is_busy = true;
 
@@ -530,9 +530,9 @@ bool (file_log_write)(HFILELOG log, enum log_level lv, const char* format, ...)
         }
     }
 
-    while (!loop_cache_push_data(unit->cmd_que, (char*)&cmd, sizeof(log_cmd*)))
+    while (!loop_cache_push_data(unit->cmd_que, &cmd, sizeof(log_cmd*)))
     {
-        if (loop_cache_pop_data(unit->rcy_que, (char*)&rcy_cmd, sizeof(log_cmd*)))
+        if (loop_cache_pop_data(unit->rcy_que, &rcy_cmd, sizeof(log_cmd*)))
         {
             if (rcy_cmd->data_ext)
             {

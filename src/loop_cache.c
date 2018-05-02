@@ -12,7 +12,7 @@ inline HMEMORYUNIT _default_loop_cache_unit(void)
     return def_loop_cache_unit;
 }
 
-HLOOPCACHE create_loop_cache(size_t size, char* data)
+HLOOPCACHE create_loop_cache(size_t size, void* data)
 {
     HLOOPCACHE cache = 0;
 
@@ -25,7 +25,7 @@ HLOOPCACHE create_loop_cache(size_t size, char* data)
 
     if (data)
     {
-        cache->cache_begin = data;
+        cache->cache_begin = (char*)data;
         cache->alloc_cache = 0;
     }
     else
@@ -56,7 +56,7 @@ void destroy_loop_cache(HLOOPCACHE cache)
     }
 }
 
-HLOOPCACHE create_loop_cache_ex(size_t size, char* data)
+HLOOPCACHE create_loop_cache_ex(size_t size, void* data)
 {
     HLOOPCACHE cache = 0;
 
@@ -69,7 +69,7 @@ HLOOPCACHE create_loop_cache_ex(size_t size, char* data)
 
     if (data)
     {
-        cache->cache_begin = data;
+        cache->cache_begin = (char*)data;
         cache->alloc_cache = 0;
     }
     else
@@ -100,7 +100,7 @@ void destroy_loop_cache_ex(HLOOPCACHE cache)
     }
 }
 
-bool loop_cache_push_data(HLOOPCACHE cache, const char* data, size_t size)
+bool loop_cache_push_data(HLOOPCACHE cache, const void* data, size_t size)
 {
     size_t dist = cache->tail + cache->size - cache->head;
     size_t used = dist >= cache->size ? (dist - cache->size) : dist;
@@ -114,7 +114,7 @@ bool loop_cache_push_data(HLOOPCACHE cache, const char* data, size_t size)
         size_t seg_2 = size - seg_1;
 
         memcpy(cache->tail, data, seg_1);
-        memcpy(cache->cache_begin, data+seg_1, seg_2);
+        memcpy(cache->cache_begin, (char*)data+seg_1, seg_2);
         cache->tail = cache->cache_begin + seg_2;
     }
     else
@@ -126,7 +126,7 @@ bool loop_cache_push_data(HLOOPCACHE cache, const char* data, size_t size)
     return true;
 }
 
-bool loop_cache_pop_data(HLOOPCACHE cache, char* data, size_t size)
+bool loop_cache_pop_data(HLOOPCACHE cache, void* data, size_t size)
 {
     size_t dist = cache->tail + cache->size - cache->head;
     size_t used = dist >= cache->size ? (dist - cache->size) : dist;
@@ -140,7 +140,7 @@ bool loop_cache_pop_data(HLOOPCACHE cache, char* data, size_t size)
         size_t seg_2 = size - seg_1;
 
         memcpy(data, cache->head, seg_1);
-        memcpy(data+seg_1, cache->cache_begin, seg_2);
+        memcpy((char*)data+seg_1, cache->cache_begin, seg_2);
         cache->head = cache->cache_begin + seg_2;
     }
     else
@@ -152,7 +152,7 @@ bool loop_cache_pop_data(HLOOPCACHE cache, char* data, size_t size)
     return true;
 }
 
-bool loop_cache_copy_data(HLOOPCACHE cache, char* data, size_t size)
+bool loop_cache_copy_data(HLOOPCACHE cache, void* data, size_t size)
 {
     size_t dist = cache->tail + cache->size - cache->head;
     size_t used = dist >= cache->size ? (dist - cache->size) : dist;
@@ -166,7 +166,7 @@ bool loop_cache_copy_data(HLOOPCACHE cache, char* data, size_t size)
         size_t seg_2 = size - seg_1;
 
         memcpy(data, cache->head, seg_1);
-        memcpy(data+seg_1, cache->cache_begin, seg_2);
+        memcpy((char*)data+seg_1, cache->cache_begin, seg_2);
     }
     else
     {
@@ -222,7 +222,7 @@ bool loop_cache_pop(HLOOPCACHE cache, size_t size)
     return true;
 }
 
-void loop_cache_get_free(HLOOPCACHE cache, char** cache_ptr, size_t* cache_len)
+void loop_cache_get_free(HLOOPCACHE cache, void** cache_ptr, size_t* cache_len)
 {
     size_t dist = cache->tail + cache->size - cache->head;
     size_t used = dist >= cache->size ? (dist - cache->size) : dist;
@@ -247,7 +247,7 @@ void loop_cache_get_free(HLOOPCACHE cache, char** cache_ptr, size_t* cache_len)
     *cache_ptr = cache->tail;
 }
 
-void loop_cache_get_data(HLOOPCACHE cache, char** cache_ptr, size_t* cache_len)
+void loop_cache_get_data(HLOOPCACHE cache, void** cache_ptr, size_t* cache_len)
 {
     size_t dist = cache->tail + cache->size - cache->head;
     size_t used = dist >= cache->size ? (dist - cache->size) : dist;
@@ -293,14 +293,14 @@ size_t loop_cache_size(HLOOPCACHE cache)
     return cache->size;
 }
 
-char* loop_cache_get_cache(HLOOPCACHE cache)
+void* loop_cache_get_cache(HLOOPCACHE cache)
 {
     return cache->cache_begin;
 }
 
-void loop_cache_reset(HLOOPCACHE cache, size_t size, char* data)
+void loop_cache_reset(HLOOPCACHE cache, size_t size, void* data)
 {
-    cache->cache_begin = data;
+    cache->cache_begin = (char*)data;
 
     if (cache->alloc_cache)
     {

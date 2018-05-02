@@ -520,7 +520,7 @@ public:
 		return m_pos;
 	}
 
-	size_t AddBlob(const char* data, size_t data_size)
+	size_t AddBlob(const void* data, size_t data_size)
 	{
 		if (m_size - m_pos < data_size)
 		{
@@ -564,7 +564,7 @@ public:
 		return m_pos;
 	}
 
-	inline char* Data()
+	inline void* Data()
 	{
 		return m_buffer;
 	}
@@ -572,6 +572,11 @@ public:
 	inline size_t Length()
 	{
 		return m_pos;
+	}
+
+	inline void Clear()
+	{
+		m_pos = 0;
 	}
 protected:
 private:
@@ -583,9 +588,9 @@ private:
 class NetDeCode
 {
 public:
-	NetDeCode(const char* data, size_t data_len)
+	NetDeCode(const void* data, size_t data_len)
 	{
-		m_buffer = data;
+		m_buffer = (const char*)data;
 		m_size = data_len;
 		m_pos = 0;
 	}
@@ -665,7 +670,7 @@ public:
 		return m_pos;
 	}
 
-	size_t DelBlob(char* data, size_t data_size)
+	size_t DelBlob(void* data, size_t data_size)
 	{
 		if (m_size - m_pos < data_size)
 			return 0;
@@ -674,6 +679,23 @@ public:
 		m_pos += data_size;
 
 		return m_pos;
+	}
+
+	inline void Reset(size_t pos = 0)
+	{
+		if (pos < m_size)
+		{
+			m_pos = pos;
+		}
+	}
+
+	inline const void* DataByPos(size_t pos)
+	{
+		if (pos < m_size)
+		{
+			return m_buffer + pos;
+		}
+		return 0;
 	}
 
 protected:

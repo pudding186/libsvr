@@ -51,7 +51,7 @@ extern HLISTENER (iocp_tcp_listen)(HNETMANAGER mgr,
                                  int recv_buf_size, int send_buf_size, 
                                  pfn_parse_packet func, bool reuse_addr);
 
-extern bool (iocp_tcp_send)(HSESSION socket, const char* data, int len);
+extern bool (iocp_tcp_send)(HSESSION socket, const void* data, int len);
 
 extern void (iocp_tcp_close_session)(HSESSION socket);
 
