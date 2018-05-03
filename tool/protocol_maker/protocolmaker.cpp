@@ -1310,8 +1310,9 @@ bool CProtocolMaker::__WriteProtocolClass( const std::string& strProtocolName, F
 	{
 		fprintf(pCppFile, "\tcase %zu:\r\n", i);
 		fprintf(pCppFile, "\t{\r\n");
-		fprintf(pCppFile, "\t\t%s* proto = (%s*)m_protocol_buffer;\r\n", m_vecProtocol[i].c_str(), m_vecProtocol[i].c_str());
-		fprintf(pCppFile, "\t\tnew(proto)%s();\r\n", m_vecProtocol[i].c_str());
+		//fprintf(pCppFile, "\t\t%s* proto = (%s*)m_protocol_buffer;\r\n", m_vecProtocol[i].c_str(), m_vecProtocol[i].c_str());
+		//fprintf(pCppFile, "\t\tnew(proto)%s();\r\n", m_vecProtocol[i].c_str());
+		fprintf(pCppFile, "\t\t%s* proto = new(m_protocol_buffer)%s();\r\n", m_vecProtocol[i].c_str(), m_vecProtocol[i].c_str());
 		fprintf(pCppFile, "\t\tif (proto->DeCode(net_data))\r\n");
 		fprintf(pCppFile, "\t\t{\r\n");
 		fprintf(pCppFile, "\t\t\tOnRecv_%s(*proto);\r\n", m_vecProtocol[i].c_str());
