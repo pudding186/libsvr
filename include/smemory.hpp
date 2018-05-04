@@ -92,10 +92,7 @@ namespace SMemory
                 void* ptr = memory_unit_alloc(unit, 4*1024);
                 *(HMEMORYMANAGER*)ptr = def_mem_mgr;
                 *(IClassMemory**)((unsigned char*)ptr + sizeof(HMEMORYMANAGER*)) = this;
-                //T* obj = (T*)((unsigned char*)ptr + sizeof(HMEMORYMANAGER*) + sizeof(IClassMemory**));
 
-                //new(obj)T();
-                //return obj;
 				return new((unsigned char*)ptr + sizeof(HMEMORYMANAGER*) + sizeof(IClassMemory**))T();
             }
             else if (size > 1)
