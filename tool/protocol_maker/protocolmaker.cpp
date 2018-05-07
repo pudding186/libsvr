@@ -1300,10 +1300,17 @@ bool CProtocolMaker::__WriteProtocolClass( const std::string& strProtocolName, F
     fprintf(pCppFile, "bool C%s::HandleProtocol(NetDeCode& net_data)\r\n{\r\n", strProtocolName.c_str());
 	fprintf(pCppFile, "\tunsigned short module_id = 0;\r\n");
 	fprintf(pCppFile, "\tunsigned short protocol_id = 0;\r\n");
+	fprintf(pCppFile, "\tsize_t net_data_pos = net_data.CurPos();");
 	fprintf(pCppFile, "\tif (!net_data.DelIntegral(module_id) || !net_data.DelIntegral(protocol_id))\r\n");
-	fprintf(pCppFile, "\t\treturn false;\r\n\r\n");
-	fprintf(pCppFile, "\tif (module_id != 2)\r\n");
-	fprintf(pCppFile, "\t\treturn false;\r\n\r\n");
+	fprintf(pCppFile, "\t{\r\n");
+	fprintf(pCppFile, "\t\tnet_data.Reset(net_data_pos);\r\n");
+	fprintf(pCppFile, "\t\treturn false;\r\n");
+	fprintf(pCppFile, "\t}\r\n\r\n");
+	fprintf(pCppFile, "\tif (module_id != %s)\r\n", m_strMoudleID.c_str());
+	fprintf(pCppFile, "\t{\r\n");
+	fprintf(pCppFile, "\t\tnet_data.Reset(net_data_pos);\r\n");
+	fprintf(pCppFile, "\t\treturn false;\r\n");
+	fprintf(pCppFile, "\t}\r\n\r\n");
 	fprintf(pCppFile, "\tswitch(protocol_id)\r\n\t{\r\n");
 
 	for (size_t i = 0; i < m_vecProtocol.size(); i++)
@@ -1320,6 +1327,7 @@ bool CProtocolMaker::__WriteProtocolClass( const std::string& strProtocolName, F
 		fprintf(pCppFile, "\t\t\treturn true;\r\n");
 		fprintf(pCppFile, "\t\t}\r\n\t\telse\r\n\t\t{\r\n");
 		fprintf(pCppFile, "\t\t\tproto->~%s();\r\n", m_vecProtocol[i].c_str());
+		fprintf(pCppFile, "\t\t\tnet_data.Reset(net_data_pos);\r\n");
 		fprintf(pCppFile, "\t\t\treturn false;\r\n");
 		fprintf(pCppFile, "\t\t}\r\n");
 		fprintf(pCppFile, "\t}\r\n\tbreak;\r\n");
