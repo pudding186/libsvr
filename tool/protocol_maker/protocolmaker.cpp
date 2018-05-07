@@ -510,7 +510,7 @@ bool CProtocolMaker::__WriteData( FILE* pHppFile, CMarkupSTL& rXml )
         {
             //fprintf(pHppFile, "\t%s():moudleid(%s),protocolid(%d){}\r\n", strName.c_str(), m_strMoudleID.c_str(), m_vecProtocol.size());
             fprintf(pHppFile, "\t%s():protocol_base(%s, %d){}\r\n", strName.c_str(), m_strMoudleID.c_str(), m_vecProtocol.size());
-			fprintf(pHppFile, "\tvirtual bool EnCode(NetEnCode& net_data);\r\n\tvirtual bool DeCode(NetDeCode& net_data);\r\n");
+			fprintf(pHppFile, "\tbool EnCode(NetEnCode& net_data);\r\n\tbool DeCode(NetDeCode& net_data);\r\n");
             m_mapStruct[strName] = mapItem;
             m_mapProtocol[strName] = mapItem;
             m_vecProtocol.push_back(strName);
@@ -1300,7 +1300,7 @@ bool CProtocolMaker::__WriteProtocolClass( const std::string& strProtocolName, F
     fprintf(pCppFile, "bool C%s::HandleProtocol(NetDeCode& net_data)\r\n{\r\n", strProtocolName.c_str());
 	fprintf(pCppFile, "\tunsigned short module_id = 0;\r\n");
 	fprintf(pCppFile, "\tunsigned short protocol_id = 0;\r\n");
-	fprintf(pCppFile, "\tsize_t net_data_pos = net_data.CurPos();");
+	fprintf(pCppFile, "\tsize_t net_data_pos = net_data.CurPos();\r\n\r\n");
 	fprintf(pCppFile, "\tif (!net_data.DelIntegral(module_id) || !net_data.DelIntegral(protocol_id))\r\n");
 	fprintf(pCppFile, "\t{\r\n");
 	fprintf(pCppFile, "\t\tnet_data.Reset(net_data_pos);\r\n");
