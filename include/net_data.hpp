@@ -719,7 +719,6 @@ struct protocol_base
         unsigned short p_id):
         module_id(m_id), protocol_id(p_id){}
 	virtual bool EnCode(NetEnCode& net_data) = 0;
-	virtual bool DeCode(NetDeCode& net_data) = 0;
 };
 
 
