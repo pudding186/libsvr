@@ -698,6 +698,11 @@ public:
 		return 0;
 	}
 
+	inline size_t CurPos()
+	{
+		return m_pos;
+	}
+
 protected:
 private:
 	const char*	m_buffer;
