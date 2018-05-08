@@ -450,7 +450,7 @@ public:
 	{
 		AddIntegral(array.size());
 
-		AddBlob((const char*)array.data(), array.size()*array.size_of_data());
+		AddBlob(array.data(), array.size()*array.size_of_data());
 
 		return m_pos;
 	}
@@ -621,7 +621,7 @@ public:
 
 		array.resize(array_size);
 
-		if (!DelBlob((char*)array.data(), array.size()*array.size_of_data()))
+		if (!DelBlob(array.data(), array.size()*array.size_of_data()))
 			return 0;
 
 		return m_pos;
