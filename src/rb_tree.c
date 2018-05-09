@@ -35,37 +35,41 @@ static __inline void _rb_link_node(HRBTREE root, HRBNODE node, HRBNODE parent, H
     {
         if (&(parent->rb_left) == rb_link)
         {
-            node->list_next = parent;
-            node->list_prev = parent->list_prev;
+			if (root->head == parent)
+			{
+				node->list_next = parent;
+				node->list_prev = 0;
 
-            if (parent->list_prev)
-            {
-                parent->list_prev->list_next = node;
-            }
+				parent->list_prev = node;
+				root->head = node;
+			}
+			else
+			{
+				node->list_next = parent;
+				node->list_prev = parent->list_prev;
 
-            parent->list_prev = node;
-
-            if (root->head == parent)
-            {
-                root->head = node;
-            }
+				parent->list_prev->list_next = node;
+				parent->list_prev = node;
+			}
         }
         else
         {
-            node->list_next = parent->list_next;
-            node->list_prev = parent;
+			if (root->tail == parent)
+			{
+				node->list_next = 0;
+				node->list_prev = parent;
 
-            if (parent->list_next)
-            {
-                parent->list_next->list_prev = node;
-            }
+				parent->list_next = node;
+				root->tail = node;
+			}
+			else
+			{
+				node->list_next = parent->list_next;
+				node->list_prev = parent;
 
-            parent->list_next = node;
-
-            if (root->tail == parent)
-            {
-                root->tail = node;
-            }
+				parent->list_next->list_prev = node;
+				parent->list_next = node;
+			}
         }
     }
     else
