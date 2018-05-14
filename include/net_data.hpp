@@ -446,7 +446,7 @@ public:
 	}
 
 	template<typename T, typename U>
-	typename std::enable_if<std::is_pod<T>::value, size_t>::type AddArray(DataArray<T, U>& array)
+	typename std::enable_if<std::is_integral<T>::value, size_t>::type AddArray(DataArray<T, U>& array)
 	{
 		AddIntegral(array.size());
 
@@ -456,7 +456,7 @@ public:
 	}
 
 	template<typename T, typename U>
-	typename std::enable_if<!std::is_pod<T>::value, size_t>::type AddArray(DataArray<T, U>& array)
+	typename std::enable_if<!std::is_integral<T>::value, size_t>::type AddArray(DataArray<T, U>& array)
 	{
 		AddIntegral(array.size());
 
@@ -613,7 +613,7 @@ public:
 	}
 
 	template<typename T, typename U>
-	typename std::enable_if<std::is_pod<T>::value, size_t>::type DelArray(DataArray<T, U>& array)
+	typename std::enable_if<std::is_integral<T>::value, size_t>::type DelArray(DataArray<T, U>& array)
 	{
 		U array_size = 0;
 		if (!DelIntegral(array_size))
@@ -628,7 +628,7 @@ public:
 	}
 
 	template<typename T, typename U>
-	typename std::enable_if<!std::is_pod<T>::value, size_t>::type DelArray(DataArray<T, U>& array)
+	typename std::enable_if<!std::is_integral<T>::value, size_t>::type DelArray(DataArray<T, U>& array)
 	{
 		U array_size = 0;
 		if (!DelIntegral(array_size))
@@ -649,13 +649,10 @@ public:
 
 	size_t DelString(char* str, size_t max_str_size)
 	{
-		unsigned short w_len = 0;
-		size_t str_len = 0;
+		unsigned short str_len;
 
-		if (!DelIntegral(w_len))
+		if (!DelIntegral(str_len))
 			return 0;
-
-		str_len = w_len;
 
 		if (m_size - m_pos < str_len)
 			return 0;
@@ -718,6 +715,7 @@ struct protocol_base
 	protocol_base( unsigned short m_id,
         unsigned short p_id):
         module_id(m_id), protocol_id(p_id){}
+
 	virtual bool EnCode(NetEnCode& net_data) = 0;
 };
 
