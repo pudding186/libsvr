@@ -996,10 +996,11 @@ bool CProtocolMaker::__WriteStructProtocolEnCodeFunc(CMarkupSTL& rXml, FILE* pHp
 	std::string strName = rXml.GetAttrib("name");
 	fprintf(pCppFile, "bool %s::EnCode(NetEnCode& net_data)\r\n{\r\n", strName.c_str());
 	
-
+	bool is_empty = true;
 	rXml.IntoElem();
 	while (rXml.FindElem("item"))
 	{
+		is_empty = false;
 		std::string strName = rXml.GetAttrib("name");
 		std::string strType = rXml.GetAttrib("type");
 		std::string strCount = rXml.GetAttrib("count");
@@ -1077,6 +1078,11 @@ bool CProtocolMaker::__WriteStructProtocolEnCodeFunc(CMarkupSTL& rXml, FILE* pHp
 	}
 	rXml.OutOfElem();
 
+	if (is_empty)
+	{
+		fprintf(pCppFile, "\tnet_data;\r\n");
+	}
+
 	fprintf(pCppFile, "\treturn true;\r\n");
 	fprintf(pCppFile, "}\r\n");
 	return true;
@@ -1086,10 +1092,11 @@ bool CProtocolMaker::__WriteStructProtocolDeCodeFunc(CMarkupSTL& rXml, FILE* pHp
 {
 	std::string strName = rXml.GetAttrib("name");
 	fprintf(pCppFile, "bool %s::DeCode(NetDeCode& net_data)\r\n{\r\n", strName.c_str());
-
+	bool is_empty = true;
 	rXml.IntoElem();
 	while (rXml.FindElem("item"))
 	{
+		is_empty = false;
 		std::string strName = rXml.GetAttrib("name");
 		std::string strType = rXml.GetAttrib("type");
 		std::string strCount = rXml.GetAttrib("count");
@@ -1169,6 +1176,11 @@ bool CProtocolMaker::__WriteStructProtocolDeCodeFunc(CMarkupSTL& rXml, FILE* pHp
 		}
 	}
 	rXml.OutOfElem();
+
+	if (is_empty)
+	{
+		fprintf(pCppFile, "\tnet_data;\r\n");
+	}
 
 	fprintf(pCppFile, "\treturn true;\r\n");
 	fprintf(pCppFile, "}\r\n");
@@ -1287,7 +1299,23 @@ bool CProtocolMaker::__WriteProtocolClass( const std::string& strProtocolName, F
 	fprintf(pCppFile, "\t\treturn false;\r\n\r\n");
 	fprintf(pCppFile, "\tnet_data.AddIntegral(proto->module_id);\r\n");
 	fprintf(pCppFile, "\tnet_data.AddIntegral(proto->protocol_id);\r\n\r\n");
+
 	fprintf(pCppFile, "\tproto->EnCode(net_data);\r\n\r\n");
+
+	//fprintf(pCppFile, "\tswitch(proto->protocol_id)\r\n\t{\r\n");
+
+	//for (size_t i = 0; i < m_vecProtocol.size(); i++)
+	//{
+	//	fprintf(pCppFile, "\tcase %zu:\r\n", i);
+	//	fprintf(pCppFile, "\t{\r\n");
+	//	fprintf(pCppFile, "\t\t((%s*)proto)->EnCode(net_data);\r\n", m_vecProtocol[i].c_str());
+	//	fprintf(pCppFile, "\t}\r\n\tbreak;\r\n");
+	//}
+
+	//fprintf(pCppFile, "\tdefault:\r\n\t\treturn false;\r\n\t}\r\n\r\n");
+
+
+
 	fprintf(pCppFile, "\treturn true;\r\n\r\n");
 	fprintf(pCppFile, "}\r\n\r\n");
     //fprintf(pCppFile, "\tCNetData m_oData;\r\n");
@@ -1298,20 +1326,20 @@ bool CProtocolMaker::__WriteProtocolClass( const std::string& strProtocolName, F
 
     //处理协议函数
     fprintf(pCppFile, "bool C%s::HandleProtocol(NetDeCode& net_data)\r\n{\r\n", strProtocolName.c_str());
-	fprintf(pCppFile, "\tunsigned short module_id = 0;\r\n");
-	fprintf(pCppFile, "\tunsigned short protocol_id = 0;\r\n");
+	fprintf(pCppFile, "\tunsigned short m_id = 0;\r\n");
+	fprintf(pCppFile, "\tunsigned short p_id = 0;\r\n");
 	fprintf(pCppFile, "\tsize_t net_data_pos = net_data.CurPos();\r\n\r\n");
-	fprintf(pCppFile, "\tif (!net_data.DelIntegral(module_id) || !net_data.DelIntegral(protocol_id))\r\n");
+	fprintf(pCppFile, "\tif (!net_data.DelIntegral(m_id) || !net_data.DelIntegral(p_id))\r\n");
 	fprintf(pCppFile, "\t{\r\n");
 	fprintf(pCppFile, "\t\tnet_data.Reset(net_data_pos);\r\n");
 	fprintf(pCppFile, "\t\treturn false;\r\n");
 	fprintf(pCppFile, "\t}\r\n\r\n");
-	fprintf(pCppFile, "\tif (module_id != %s)\r\n", m_strMoudleID.c_str());
+	fprintf(pCppFile, "\tif (m_id != %s)\r\n", m_strMoudleID.c_str());
 	fprintf(pCppFile, "\t{\r\n");
 	fprintf(pCppFile, "\t\tnet_data.Reset(net_data_pos);\r\n");
 	fprintf(pCppFile, "\t\treturn false;\r\n");
 	fprintf(pCppFile, "\t}\r\n\r\n");
-	fprintf(pCppFile, "\tswitch(protocol_id)\r\n\t{\r\n");
+	fprintf(pCppFile, "\tswitch(p_id)\r\n\t{\r\n");
 
 	for (size_t i = 0; i < m_vecProtocol.size(); i++)
 	{
@@ -1334,7 +1362,7 @@ bool CProtocolMaker::__WriteProtocolClass( const std::string& strProtocolName, F
 	}
 
 	fprintf(pCppFile, "\tdefault:\r\n\t\treturn false;\r\n\t}\r\n\r\n");
-	fprintf(pCppFile, "\treturn true;\r\n}\r\n\r\n");
+	fprintf(pCppFile, "}\r\n\r\n");
 
 
 
