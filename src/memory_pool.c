@@ -413,7 +413,7 @@ size_t memory_unit_size(HMEMORYUNIT unit)
     return unit->unit_size;
 }
 
-HMEMORYMANAGER(create_memory_manager)(size_t align, size_t start_size, size_t max_size, size_t grow_size, size_t grow_power)
+HMEMORYMANAGER create_memory_manager(size_t align, size_t start_size, size_t max_size, size_t grow_size, size_t grow_power)
 {
     size_t last_start_size = sizeof(size_t);
 
@@ -438,7 +438,7 @@ HMEMORYMANAGER(create_memory_manager)(size_t align, size_t start_size, size_t ma
     return mgr;
 }
 
-void(destroy_memory_manager)(HMEMORYMANAGER mgr)
+void destroy_memory_manager(HMEMORYMANAGER mgr)
 {
     HAVLNODE pool_node = avl_first(&mgr->mem_pool_map);
     while (pool_node)
@@ -451,7 +451,7 @@ void(destroy_memory_manager)(HMEMORYMANAGER mgr)
 }
 
 
-void *(memory_manager_alloc)(HMEMORYMANAGER mgr, size_t mem_size)
+void* memory_manager_alloc(HMEMORYMANAGER mgr, size_t mem_size)
 {
     HAVLNODE pool_node = avl_tree_find_int64_nearby(&mgr->mem_pool_map, mem_size);
 
@@ -466,7 +466,7 @@ void *(memory_manager_alloc)(HMEMORYMANAGER mgr, size_t mem_size)
     return memory_pool_alloc((HMEMORYPOOL)avl_node_value(pool_node), mem_size);
 }
 
-void *(memory_manager_realloc)(HMEMORYMANAGER mgr, void * old_mem, size_t mem_size)
+void* memory_manager_realloc(HMEMORYMANAGER mgr, void * old_mem, size_t mem_size)
 {
     HMEMORYUNIT unit = 0;
     void* new_mem = 0;
@@ -519,7 +519,7 @@ void *(memory_manager_realloc)(HMEMORYMANAGER mgr, void * old_mem, size_t mem_si
     return new_mem;
 }
 
-void(memory_manager_free)(HMEMORYMANAGER mgr, void * mem)
+void memory_manager_free(HMEMORYMANAGER mgr, void * mem)
 {
     HMEMORYUNIT unit = 0;
     HAVLNODE pool_node = 0;
