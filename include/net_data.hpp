@@ -387,8 +387,8 @@ public:
 	NetEnCode(size_t reserve_size)
 	{
 		m_buffer = (char*)S_MALLOC(reserve_size);
-		m_pos = 0;
-		m_size = reserve_size;
+		m_cur_pos = m_buffer;
+		m_end = m_buffer + reserve_size;
 	}
 	~NetEnCode()
 	{
@@ -397,66 +397,34 @@ public:
 			S_FREE(m_buffer);
 		}
 		m_buffer = 0;
-		m_size = 0;
-		m_pos = 0;
+		m_end = 0;
+		m_cur_pos = 0;
 	}
 
 	template<typename T>
-	typename std::enable_if<std::is_integral<T>::value, size_t>::type AddIntegral(T var)
+	typename std::enable_if<std::is_integral<T>::value, void>::type AddIntegral(T var)
 	{
-		if (m_size - m_pos < sizeof(T))
+		if (m_cur_pos + sizeof(T) > m_end)
 		{
-			if ((std::numeric_limits<size_t>::max)() - m_size < m_size / 2)
-			{
-				if (m_size == (std::numeric_limits<size_t>::max)())
-				{
-					char* p = 0;
-					*p = 'a';
-				}
-				else
-				{
-					m_size = (std::numeric_limits<size_t>::max)();
-				}
-			}
-			else
-			{
-				for (;;)
-				{
-					m_size += m_size / 2;
-					if (m_size - m_pos >= sizeof(T))
-					{
-						break;
-					}
-
-					if ((std::numeric_limits<size_t>::max)() - m_size < m_size / 2)
-					{
-						char* p = 0;
-						*p = 'a';
-					}
-				}
-			}
-
-			m_buffer = (char*)S_REALLOC(m_buffer, m_size);
+			__extend(sizeof(T));
 		}
 
-		*(T*)(m_buffer + m_pos) = var;
-		m_pos += sizeof(T);
-
-		return m_pos;
+		*(T*)m_cur_pos = var;
+		m_cur_pos += sizeof(T);
 	}
 
+
+
 	template<typename T, typename U>
-	typename std::enable_if<std::is_integral<T>::value, size_t>::type AddArray(DataArray<T, U>& array)
+	typename std::enable_if<std::is_integral<T>::value, void>::type AddArray(DataArray<T, U>& array)
 	{
 		AddIntegral(array.size());
 
 		AddBlob(array.data(), array.size()*array.size_of_data());
-
-		return m_pos;
 	}
 
 	template<typename T, typename U>
-	typename std::enable_if<!std::is_integral<T>::value, size_t>::type AddArray(DataArray<T, U>& array)
+	typename std::enable_if<!std::is_integral<T>::value, void>::type AddArray(DataArray<T, U>& array)
 	{
 		AddIntegral(array.size());
 
@@ -464,104 +432,33 @@ public:
 		{
 			array[i].EnCode(*this);
 		}
-
-		return m_pos;
 	}
 
-	size_t AddString(const char* str, size_t max_str_size)
+	void AddString(const char* str, size_t max_str_size)
 	{
 		size_t str_len = strnlen(str, max_str_size - 1);
 
-		if (m_size - m_pos < str_len + sizeof(unsigned short))
+		if (m_cur_pos + str_len + sizeof(unsigned short) > m_end)
 		{
-			if ((std::numeric_limits<size_t>::max)() - m_size < m_size / 2)
-			{
-				if (m_size == (std::numeric_limits<size_t>::max)())
-				{
-					char* p = 0;
-					*p = 'a';
-				}
-				else
-				{
-					m_size = (std::numeric_limits<size_t>::max)();
-				}
-			}
-			else
-			{
-				for (;;)
-				{
-					m_size += m_size / 2;
-					if (m_size - m_pos >= str_len + sizeof(unsigned short))
-					{
-						break;
-					}
-
-					if ((std::numeric_limits<size_t>::max)() - m_size < m_size / 2)
-					{
-						char* p = 0;
-						*p = 'a';
-					}
-				}
-			}
-
-			m_buffer = (char*)S_REALLOC(m_buffer, m_size);
-		}
-
-		if (str_len > (std::numeric_limits<unsigned short>::max)())
-		{
-			str_len = (std::numeric_limits<unsigned short>::max)();
+			__extend(str_len + sizeof(unsigned short));
 		}
 
 		AddIntegral((unsigned short)str_len);
 
-		memcpy(m_buffer + m_pos, str, str_len);
-		m_pos += str_len;
-
-		return m_pos;
+		memcpy(m_cur_pos, str, str_len);
+		m_cur_pos += str_len;
 	}
 
-	size_t AddBlob(const void* data, size_t data_size)
+	void AddBlob(const void* data, size_t data_size)
 	{
-		if (m_size - m_pos < data_size)
+		if (m_cur_pos + data_size > m_end)
 		{
-			if ((std::numeric_limits<size_t>::max)() - m_size < m_size / 2)
-			{
-				if (m_size == (std::numeric_limits<size_t>::max)())
-				{
-					char* p = 0;
-					*p = 'a';
-				}
-				else
-				{
-					m_size = (std::numeric_limits<size_t>::max)();
-				}
-			}
-			else
-			{
-				for (;;)
-				{
-					m_size += m_size / 2;
-					if (m_size - m_pos >= data_size)
-					{
-						break;
-					}
-
-					if ((std::numeric_limits<size_t>::max)() - m_size < m_size / 2)
-					{
-						char* p = 0;
-						*p = 'a';
-					}
-				}
-			}
-
-			m_buffer = (char*)S_REALLOC(m_buffer, m_size);
+			__extend(data_size);
 		}
 
-		memcpy(m_buffer + m_pos, data, data_size);
+		memcpy(m_cur_pos, data, data_size);
 
-		m_pos += data_size;
-
-		return m_pos;
+		m_cur_pos += data_size;
 	}
 
 	inline void* Data()
@@ -571,18 +468,58 @@ public:
 
 	inline size_t Length()
 	{
-		return m_pos;
+		return m_cur_pos - m_buffer;
 	}
 
 	inline void Clear()
 	{
-		m_pos = 0;
+		m_cur_pos = m_buffer;
 	}
 protected:
+	void __extend(size_t min_size)
+	{
+		size_t cur_size = m_end - m_buffer;
+		size_t cur_pos = m_cur_pos - m_buffer;
+
+		if ((std::numeric_limits<size_t>::max)() - cur_size < cur_size / 2)
+		{
+			if (cur_size == (std::numeric_limits<size_t>::max)())
+			{
+				char* p = 0;
+				*p = 'a';
+			}
+			else
+			{
+				cur_size = (std::numeric_limits<size_t>::max)();
+			}
+		}
+		else
+		{
+			for (;;)
+			{
+				cur_size += cur_size / 2;
+				if (cur_size - (m_cur_pos - m_buffer) >= min_size)
+				{
+					break;
+				}
+
+				if ((std::numeric_limits<size_t>::max)() - cur_size < cur_size / 2)
+				{
+					char* p = 0;
+					*p = 'a';
+				}
+			}
+		}
+
+
+		m_buffer = (char*)S_REALLOC(m_buffer, cur_size);
+		m_cur_pos = m_buffer + cur_pos;
+		m_end = m_buffer + cur_size;
+	}
 private:
 	char*		m_buffer;
-	size_t		m_size;
-	size_t      m_pos;
+	char*		m_cur_pos;
+	char*		m_end;
 };
 
 class NetDeCode
@@ -591,29 +528,30 @@ public:
 	NetDeCode(const void* data, size_t data_len)
 	{
 		m_buffer = (const char*)data;
-		m_size = data_len;
-		m_pos = 0;
+		m_cur_pos = m_buffer;
+		m_end = m_buffer + data_len;
 	}
 	~NetDeCode()
 	{
 		m_buffer = 0;
-		m_size = 0;
-		m_pos = 0;
+		m_cur_pos = 0;
+		m_end = 0;
 	}
 
 	template<typename T>
-	typename std::enable_if<std::is_integral<T>::value, size_t>::type DelIntegral(T& var)
+	typename std::enable_if<std::is_integral<T>::value, const char*>::type DelIntegral(T& var)
 	{
-		if (m_size - m_pos < sizeof(T))
+		if (m_cur_pos + sizeof(T) > m_end)
 			return 0;
-		var = *(T*)(m_buffer + m_pos);
-		m_pos += sizeof(T);
 
-		return m_pos;
+		var = *(T*)m_cur_pos;
+		m_cur_pos += sizeof(T);
+
+		return m_cur_pos;
 	}
 
 	template<typename T, typename U>
-	typename std::enable_if<std::is_integral<T>::value, size_t>::type DelArray(DataArray<T, U>& array)
+	typename std::enable_if<std::is_integral<T>::value, const char*>::type DelArray(DataArray<T, U>& array)
 	{
 		U array_size = 0;
 		if (!DelIntegral(array_size))
@@ -624,11 +562,11 @@ public:
 		if (!DelBlob(array.data(), array.size()*array.size_of_data()))
 			return 0;
 
-		return m_pos;
+		return m_cur_pos;
 	}
 
 	template<typename T, typename U>
-	typename std::enable_if<!std::is_integral<T>::value, size_t>::type DelArray(DataArray<T, U>& array)
+	typename std::enable_if<!std::is_integral<T>::value, const char*>::type DelArray(DataArray<T, U>& array)
 	{
 		U array_size = 0;
 		if (!DelIntegral(array_size))
@@ -644,67 +582,70 @@ public:
 			}
 		}
 
-		return m_pos;
+		return m_cur_pos;
 	}
 
-	size_t DelString(char* str, size_t max_str_size)
+	const char* DelString(char* str, size_t max_str_size)
 	{
 		unsigned short str_len;
 
 		if (!DelIntegral(str_len))
 			return 0;
 
-		if (m_size - m_pos < str_len)
+		//if (m_size - m_pos < str_len)
+		//	return 0;
+		if (m_cur_pos + str_len > m_end)
 			return 0;
 
 		if (str_len + 1 > max_str_size)
 			return 0;
 
-		memcpy(str, m_buffer + m_pos, str_len);
+		memcpy(str, m_cur_pos, str_len);
 		str[str_len] = '\0';
-		m_pos += str_len;
+		m_cur_pos += str_len;
 
-		return m_pos;
+		return m_cur_pos;
 	}
 
-	size_t DelBlob(void* data, size_t data_size)
+	const char* DelBlob(void* data, size_t data_size)
 	{
-		if (m_size - m_pos < data_size)
+		if (m_cur_pos + data_size > m_end)
 			return 0;
 
-		memcpy(data, m_buffer + m_pos, data_size);
-		m_pos += data_size;
+		memcpy(data, m_cur_pos, data_size);
+		m_cur_pos += data_size;
 
-		return m_pos;
+		return m_cur_pos;
 	}
 
 	inline void Reset(size_t pos = 0)
 	{
-		if (pos < m_size)
+		if (m_buffer + pos  < m_end)
 		{
-			m_pos = pos;
+			m_cur_pos = m_buffer + pos;
 		}
 	}
 
-	inline const void* DataByPos(size_t pos)
+	inline const char* DataByPos(size_t pos)
 	{
-		if (pos < m_size)
+		if (m_buffer + pos < m_end)
 		{
 			return m_buffer + pos;
 		}
+
 		return 0;
 	}
 
 	inline size_t CurPos()
 	{
-		return m_pos;
+		return m_cur_pos - m_buffer;
 	}
 
 protected:
 private:
 	const char*	m_buffer;
-	size_t		m_size;
-	size_t      m_pos;
+	const char* m_cur_pos;
+	const char* m_end;
 };
 
 
