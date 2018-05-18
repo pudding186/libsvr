@@ -42,6 +42,19 @@ inline void StrSafeCopy(char(&Destination)[N], const char* Source) throw() {
 	Destination[N - 1] = '\0';
 }
 
+template <typename T>
+inline void StrSafeCopy(T& Destination, const char* Source, size_t len)
+{
+	// Use cast to ensure that we only allow character arrays
+	(static_cast<char[sizeof(Destination)]>(Destination));
+	size_t size = sizeof(Destination);
+
+	size_t l = min(size - 1, len);
+	strncpy(Destination, Source, l);
+	Destination[l] = 0;
+}
+
+
 
 //////////////////////////////////////////////////////////////////////////
 #define DECLARE_SINGLETON(cls)\
