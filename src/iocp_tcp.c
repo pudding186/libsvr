@@ -146,7 +146,7 @@ typedef struct st_iocp_tcp_socket
     //LONG                        data_to_send;
     LONG                        data_has_recv;
 
-    LONG                        data_delay_send;
+    //LONG                        data_delay_send;
     LONG                        data_delay_send_size;
 
     unsigned int                local_ip;
@@ -231,7 +231,7 @@ void _iocp_tcp_socket_reset(struct st_iocp_tcp_socket* socket)
 
     socket->data_has_recv = 0;
 
-    socket->data_delay_send = 0;
+    //socket->data_delay_send = 0;
     socket->data_delay_send_size = 0;
 
     socket->local_ip = 0;
