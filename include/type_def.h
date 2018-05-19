@@ -9,7 +9,7 @@ typedef unsigned char       UINT8, *PUINT8;
 typedef unsigned short      UINT16, *PUINT16;
 typedef unsigned int        UINT32, *PUINT32;
 typedef unsigned long long  UINT64, *PUINT64;
-typedef size_t				SIZE_T, *PSIZE_T;
+typedef size_t				SIZET, *PSIZET;
 
 enum e_json_value_type
 {
