@@ -23,7 +23,7 @@
 #endif
 
 
-typedef struct st_log_cmd 
+typedef struct st_log_cmd
 {
     int     cmd;
     enum    log_level lv;
@@ -202,7 +202,7 @@ const char* log_lv_to_str(enum log_level lv)
     {
     case log_dbg:
         return "[DBG]";
-    	break;
+        break;
     case log_inf:
         return "[INF]";
         break;
@@ -350,7 +350,7 @@ HFILELOG(create_file_log)(const char* path, const char* name)
 {
     unsigned thread_id = 0;
     log_file* log = (log_file*)malloc(sizeof(log_file));
-    
+
     if (!path)
     {
         return 0;
@@ -517,12 +517,12 @@ bool (file_log_write)(HFILELOG log, enum log_level lv, const char* format, ...)
         int new_data_len = cmd->data_len + 1;
         cmd->data_ext = memory_manager_alloc(unit->log_mem_pool_mgr, new_data_len);
 
-        
+
         va_start(args_ex, format);
         cmd->data_len = vsnprintf(cmd->data_ext, new_data_len, format, args_ex);
         va_end(args_ex);
 
-        if (cmd->data_len != (new_data_len-1))
+        if (cmd->data_len != (new_data_len - 1))
         {
             memory_manager_free(unit->log_mem_pool_mgr, cmd->data_ext);
             memory_unit_free(unit->log_cmd_unit, cmd);

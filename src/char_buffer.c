@@ -19,7 +19,7 @@ inline HMEMORYUNIT _default_char_buffer_unit(void)
     return def_char_buffer_unit;
 }
 
-HCHARBUFFER create_char_buffer( void )
+HCHARBUFFER create_char_buffer(void)
 {
     HCHARBUFFER buffer = (HCHARBUFFER)memory_unit_alloc(_default_char_buffer_unit(), 4096);
 
@@ -28,7 +28,7 @@ HCHARBUFFER create_char_buffer( void )
     buffer->buffer_capacity = MAX_CHAR_SEGMENT_SIZE;
     buffer->buffer_ptr = buffer->default_buffer;
     buffer->buffer_use_size = 0;
-	buffer->char_segment_unit = _default_char_segment_unit();
+    buffer->char_segment_unit = _default_char_segment_unit();
 
     return buffer;
 }
@@ -72,7 +72,7 @@ void char_buffer_append(HCHARBUFFER buffer, const char* data, size_t length)
             data += left;
             length -= left;
 
-			buffer->head = (char_segment*)memory_unit_alloc(buffer->char_segment_unit, 4096);
+            buffer->head = (char_segment*)memory_unit_alloc(buffer->char_segment_unit, 4096);
             buffer->tail = buffer->head;
             buffer->head->next = 0;
             buffer->head->use_size = 0;
@@ -153,7 +153,7 @@ const char* char_buffer_c_str(HCHARBUFFER buffer)
 
         memcpy(buffer->buffer_ptr + buffer->buffer_use_size, seg->data, seg->use_size);
         buffer->buffer_use_size += seg->use_size;
-        
+
         seg = seg->next;
 
         memory_unit_free(buffer->char_segment_unit, del_seg);

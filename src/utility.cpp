@@ -476,7 +476,7 @@ public:
     }
 
 protected:
-    CFuncPerformanceInfo*	m_func_list;
+    CFuncPerformanceInfo * m_func_list;
     HSHMMGR					m_shm_mgr;
     int						m_shm_key;
     struct func_stack*		m_func_stack;

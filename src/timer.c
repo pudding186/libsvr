@@ -112,7 +112,7 @@ typedef struct st_timer_info
     struct st_timer_manager*    manager;
 }timer_info;
 
-typedef struct st_timer_manager 
+typedef struct st_timer_manager
 {
     struct list_head    tv1[TVR_SIZE];
     struct list_head    tv2[TVN_SIZE];
@@ -188,49 +188,49 @@ void _add_timer(struct st_timer_info* info)
 
     int i;
 
-	if (idx < TVR_SIZE)
-	{
-		i = expires & TVR_MASK;
-		vec = info->manager->tv1 + i;
-	}
-	else if (idx < 1 << (TVR_BITS + TVN_BITS))
-	{
-		i = (expires >> TVR_BITS) & TVN_MASK;
-		vec = info->manager->tv2 + i;
-	}
-	else if (idx < 1 <<(TVR_BITS + 2*TVN_BITS))
-	{
-		i = (expires >> (TVR_BITS + TVN_BITS)) & TVN_MASK;
-		vec = info->manager->tv3 + i;
-	}
-	else if (idx < 1 <<(TVR_BITS + 3*TVN_BITS))
-	{
-		i = (expires >> (TVR_BITS + 2*TVN_BITS)) & TVN_MASK;
-		vec = info->manager->tv4 + i;
-	}
-	else if ((INT32)idx < 0)
-	{
-		/*  
-		 * Can happen if you add a timer with expires == jiffies,  
-		 * or you set a timer to go off in the past  
-		 */
-		vec = info->manager->tv1 + (info->manager->last_tick & TVR_MASK);
-	}
-	else
-	{
-		/* If the timeout is larger than 0xffffffff on 64-bit  
-		 * architectures then we use the maximum timeout:  
-		 */
-		if (idx > 0xffffffffUL)
-		{
-			idx = 0xffffffffUL;
-			expires = idx + info->manager->last_tick;
-		}
+    if (idx < TVR_SIZE)
+    {
+        i = expires & TVR_MASK;
+        vec = info->manager->tv1 + i;
+    }
+    else if (idx < 1 << (TVR_BITS + TVN_BITS))
+    {
+        i = (expires >> TVR_BITS) & TVN_MASK;
+        vec = info->manager->tv2 + i;
+    }
+    else if (idx < 1 << (TVR_BITS + 2 * TVN_BITS))
+    {
+        i = (expires >> (TVR_BITS + TVN_BITS)) & TVN_MASK;
+        vec = info->manager->tv3 + i;
+    }
+    else if (idx < 1 << (TVR_BITS + 3 * TVN_BITS))
+    {
+        i = (expires >> (TVR_BITS + 2 * TVN_BITS)) & TVN_MASK;
+        vec = info->manager->tv4 + i;
+    }
+    else if ((INT32)idx < 0)
+    {
+        /*
+         * Can happen if you add a timer with expires == jiffies,
+         * or you set a timer to go off in the past
+         */
+        vec = info->manager->tv1 + (info->manager->last_tick & TVR_MASK);
+    }
+    else
+    {
+        /* If the timeout is larger than 0xffffffff on 64-bit
+         * architectures then we use the maximum timeout:
+         */
+        if (idx > 0xffffffffUL)
+        {
+            idx = 0xffffffffUL;
+            expires = idx + info->manager->last_tick;
+        }
 
-		i = (expires >> (TVR_BITS + 3*TVN_BITS)) & TVN_MASK;
+        i = (expires >> (TVR_BITS + 3 * TVN_BITS)) & TVN_MASK;
 
-		vec = info->manager->tv5 + i;
-	}
+        vec = info->manager->tv5 + i;
+    }
 
     LIST_ADD_TAIL(&info->entry, vec);
 }
@@ -297,7 +297,7 @@ void destroy_timer_manager(HTIMERMANAGER mgr)
 
 HTIMERINFO timer_add(HTIMERMANAGER mgr, unsigned elapse, int count, void* data)
 {
-    struct st_timer_info* info = (struct st_timer_info*)memory_unit_alloc(mgr->timer_info_unit, 4*1024);
+    struct st_timer_info* info = (struct st_timer_info*)memory_unit_alloc(mgr->timer_info_unit, 4 * 1024);
 
     info->expires = mgr->last_tick + elapse;
     info->elapse = elapse;
@@ -359,7 +359,7 @@ void timer_update(HTIMERMANAGER mgr, unsigned run_time)
 
     unsigned int tick = get_tick();
 
-    while ((int)(tick) - (int)(mgr->last_tick) >= 0)
+    while ((int)(tick)-(int)(mgr->last_tick) >= 0)
     {
         struct list_head work_list;
         struct list_head* head = &work_list;
@@ -463,7 +463,7 @@ time_t string_to_time(const char* time_string)
 {
     struct tm t_time;
 
-    if (6 == sscanf(time_string, "%d-%d-%d %d:%d:%d", 
+    if (6 == sscanf(time_string, "%d-%d-%d %d:%d:%d",
         &t_time.tm_year, &t_time.tm_mon, &t_time.tm_mday, &t_time.tm_hour, &t_time.tm_min, &t_time.tm_sec))
     {
         t_time.tm_year -= 1900;
@@ -499,19 +499,19 @@ time_t get_time(void)
 //返回从1970年1月1日0时0分0到现在经过的小时数(UTC 时间)
 time_t now_hour(void)
 {
-    return g_local_time/3600;
+    return g_local_time / 3600;
 }
 //从1970年1月1日0时0分0到现在经过的天数(考虑本地时区)
 time_t now_day(void)
 {
-    return (g_local_time - g_time_zone)/86400;
+    return (g_local_time - g_time_zone) / 86400;
 }
 //从UTC 1970年1月1日0时0分0到现在经过的星期数(考虑本地时区)
 time_t now_week(void)
 {
     //1970年1月1日是星期四
 
-    return (now_day()+3)/7;
+    return (now_day() + 3) / 7;
 }
 //从UTC 1970年1月1日0时0分0到现在经过的月数
 unsigned now_month(void)
@@ -519,7 +519,7 @@ unsigned now_month(void)
     time_t tt = g_local_time;
     struct tm* pTM = localtime(&tt);
 
-    return (pTM->tm_year-70)*12 + pTM->tm_mon+1;
+    return (pTM->tm_year - 70) * 12 + pTM->tm_mon + 1;
 }
 //从UTC 1970年1月1日0时0分0到现在经过的年数
 unsigned now_year(void)
@@ -527,7 +527,7 @@ unsigned now_year(void)
     time_t tt = g_local_time;
     struct tm* pTM = localtime(&tt);
 
-    return pTM->tm_year-70;
+    return pTM->tm_year - 70;
 }
 
 //获取本周指定星期日子到1970年1月1日8时0分0经过的秒数(UTC时间),取值区间[1, 7]其中7代表星期天，1代表星期一

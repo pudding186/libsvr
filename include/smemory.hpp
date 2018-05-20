@@ -30,7 +30,7 @@ namespace SMemory
 
         bool IsValidPtr(void* ptr);
 
-        inline const char* Name(){return name;}
+        inline const char* Name() { return name; }
 
         inline static void* Alloc(size_t mem_size)
         {
@@ -64,7 +64,7 @@ namespace SMemory
     {
     public:
 
-        virtual void Delete(void* ptr){};
+        virtual void Delete(void* ptr) {};
     };
 
     template <typename T>
@@ -89,11 +89,11 @@ namespace SMemory
         {
             if (size == 1)
             {
-                void* ptr = memory_unit_alloc(unit, 4*1024);
+                void* ptr = memory_unit_alloc(unit, 4 * 1024);
                 *(HMEMORYMANAGER*)ptr = def_mem_mgr;
                 *(IClassMemory**)((unsigned char*)ptr + sizeof(HMEMORYMANAGER*)) = this;
 
-				return new((unsigned char*)ptr + sizeof(HMEMORYMANAGER*) + sizeof(IClassMemory**))T();
+                return new((unsigned char*)ptr + sizeof(HMEMORYMANAGER*) + sizeof(IClassMemory**))T();
             }
             else if (size > 1)
             {
@@ -249,13 +249,13 @@ namespace SMemory
     //////////////////////////////////////////////////////////////////////////
 
     template<typename T>
-    struct Allocator_base 
+    struct Allocator_base
     {
         typedef T value_type;
     };
 
     template<typename T>
-    struct Allocator_base<const T> 
+    struct Allocator_base<const T>
     {
         typedef T value_type;
     };
@@ -280,10 +280,10 @@ namespace SMemory
             typedef Allocator<_other> other;
         };
 
-        pointer address(reference value)const{
+        pointer address(reference value)const {
             return &value;
         }
-        const_pointer address(const_reference value)const{
+        const_pointer address(const_reference value)const {
             return (const_pointer)&value;
         }
 
@@ -298,12 +298,12 @@ namespace SMemory
             return (std::numeric_limits<size_type>::max)() / sizeof(T);
         }
 
-        pointer allocate(size_type num, const void* hint= 0)
+        pointer allocate(size_type num, const void* hint = 0)
         {
             return (pointer)S_MALLOC(sizeof(value_type)*num);
         }
 
-        void construct(pointer p,const_reference value)
+        void construct(pointer p, const_reference value)
         {
             new(p) T(value);
         }
@@ -313,15 +313,19 @@ namespace SMemory
             p->~T();
         }
 
-        void deallocate( pointer p, size_type size )
+        void deallocate(pointer p, size_type size)
         {
             S_FREE(p);
         }
 
-        bool operator==(Allocator const& a) const 
-        { return true; }
+        bool operator==(Allocator const& a) const
+        {
+            return true;
+        }
 
-        bool operator!=(Allocator const& a) const 
-        { return !operator==(a); }
+        bool operator!=(Allocator const& a) const
+        {
+            return !operator==(a);
+        }
     };
 }

@@ -114,7 +114,7 @@ bool loop_cache_push_data(HLOOPCACHE cache, const void* data, size_t size)
         size_t seg_2 = size - seg_1;
 
         memcpy(cache->tail, data, seg_1);
-        memcpy(cache->cache_begin, (char*)data+seg_1, seg_2);
+        memcpy(cache->cache_begin, (char*)data + seg_1, seg_2);
         cache->tail = cache->cache_begin + seg_2;
     }
     else
@@ -140,7 +140,7 @@ bool loop_cache_pop_data(HLOOPCACHE cache, void* data, size_t size)
         size_t seg_2 = size - seg_1;
 
         memcpy(data, cache->head, seg_1);
-        memcpy((char*)data+seg_1, cache->cache_begin, seg_2);
+        memcpy((char*)data + seg_1, cache->cache_begin, seg_2);
         cache->head = cache->cache_begin + seg_2;
     }
     else
@@ -166,7 +166,7 @@ bool loop_cache_copy_data(HLOOPCACHE cache, void* data, size_t size)
         size_t seg_2 = size - seg_1;
 
         memcpy(data, cache->head, seg_1);
-        memcpy((char*)data+seg_1, cache->cache_begin, seg_2);
+        memcpy((char*)data + seg_1, cache->cache_begin, seg_2);
     }
     else
     {
@@ -229,14 +229,14 @@ void loop_cache_get_free(HLOOPCACHE cache, void** cache_ptr, size_t* cache_len)
 
     if (*cache_len)
     {
-        if ((*cache_len) > (cache->size - used -1))
+        if ((*cache_len) > (cache->size - used - 1))
         {
-            *cache_len = cache->size - used -1;
+            *cache_len = cache->size - used - 1;
         }
     }
     else
     {
-        *cache_len = cache->size - used -1;
+        *cache_len = cache->size - used - 1;
     }
 
     if (cache->tail + (*cache_len) >= cache->cache_end)
@@ -277,7 +277,7 @@ size_t loop_cache_free_size(HLOOPCACHE cache)
     size_t dist = cache->tail + cache->size - cache->head;
     size_t used = dist >= cache->size ? (dist - cache->size) : dist;
 
-    return cache->size - used -1;
+    return cache->size - used - 1;
 }
 
 size_t loop_cache_data_size(HLOOPCACHE cache)
@@ -307,7 +307,7 @@ void loop_cache_reset(HLOOPCACHE cache, size_t size, void* data)
         free(cache->alloc_cache);
         cache->alloc_cache = 0;
     }
-    
+
 
     cache->head = cache->cache_begin;
     cache->tail = cache->cache_begin;

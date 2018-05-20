@@ -23,7 +23,7 @@ static __inline ptrdiff_t _avl_node_height(HAVLNODE node)
 }
 
 static __inline void _avl_link_node(HAVLTREE root, HAVLNODE node, HAVLNODE parent,
-HAVLNODE* avl_link)
+    HAVLNODE* avl_link)
 {
     node->avl_height = 1;
     node->avl_parent = parent;
@@ -35,41 +35,41 @@ HAVLNODE* avl_link)
     {
         if (&(parent->avl_child[0]) == avl_link)
         {
-			if (root->head == parent)
-			{
-				node->list_next = parent;
-				node->list_prev = 0;
+            if (root->head == parent)
+            {
+                node->list_next = parent;
+                node->list_prev = 0;
 
-				parent->list_prev = node;
-				root->head = node;
-			}
-			else
-			{
-				node->list_next = parent;
-				node->list_prev = parent->list_prev;
+                parent->list_prev = node;
+                root->head = node;
+            }
+            else
+            {
+                node->list_next = parent;
+                node->list_prev = parent->list_prev;
 
-				parent->list_prev->list_next = node;
-				parent->list_prev = node;
-			}
+                parent->list_prev->list_next = node;
+                parent->list_prev = node;
+            }
         }
         else
         {
-			if (root->tail == parent)
-			{
-				node->list_next = 0;
-				node->list_prev = parent;
+            if (root->tail == parent)
+            {
+                node->list_next = 0;
+                node->list_prev = parent;
 
-				parent->list_next = node;
-				root->tail = node;
-			}
-			else
-			{
-				node->list_next = parent->list_next;
-				node->list_prev = parent;
+                parent->list_next = node;
+                root->tail = node;
+            }
+            else
+            {
+                node->list_next = parent->list_next;
+                node->list_prev = parent;
 
-				parent->list_next->list_prev = node;
-				parent->list_next = node;
-			}
+                parent->list_next->list_prev = node;
+                parent->list_next = node;
+            }
         }
     }
     else
@@ -109,9 +109,9 @@ static void _avl_roate(HAVLTREE tree, HAVLNODE node)
     parent->avl_parent = node;
 
     parent->avl_height = 1 + max(_avl_node_height(parent->avl_child[0]),
-                                 _avl_node_height(parent->avl_child[1]));
+        _avl_node_height(parent->avl_child[1]));
     node->avl_height = 1 + max(_avl_node_height(node->avl_child[0]),
-                                _avl_node_height(node->avl_child[1]));
+        _avl_node_height(node->avl_child[1]));
 }
 
 static void _avl_balance(HAVLTREE tree, HAVLNODE node)
@@ -121,7 +121,7 @@ static void _avl_balance(HAVLTREE tree, HAVLNODE node)
         ptrdiff_t balance;
 
         node->avl_height = 1 + max(_avl_node_height(node->avl_child[0]),
-                                    _avl_node_height(node->avl_child[1]));
+            _avl_node_height(node->avl_child[1]));
 
         balance = _avl_node_height(node->avl_child[0]) - _avl_node_height(node->avl_child[1]);
 
@@ -755,27 +755,27 @@ HAVLNODE avl_tree_find_int64_nearby(HAVLTREE tree, long long key)
     return nearby_node;
 }
 
-int avl_node_key_int( HAVLNODE node )
+int avl_node_key_int(HAVLNODE node)
 {
     return node->key.key_int;
 }
 
-long long avl_node_key_int64( HAVLNODE node )
+long long avl_node_key_int64(HAVLNODE node)
 {
     return node->key.key_int64;
 }
 
-const char* avl_node_key_str( HAVLNODE node )
+const char* avl_node_key_str(HAVLNODE node)
 {
     return node->key.key_str;
 }
 
-void* avl_node_key_user( HAVLNODE node )
+void* avl_node_key_user(HAVLNODE node)
 {
     return node->key.key_user;
 }
 
-void* avl_node_value( HAVLNODE node )
+void* avl_node_value(HAVLNODE node)
 {
     return node->value.value_user;
 }

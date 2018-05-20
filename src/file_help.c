@@ -4,7 +4,7 @@
 
 #include <Windows.h>
 
-typedef struct st_dir_file_node 
+typedef struct st_dir_file_node
 {
     struct st_dir_file_node* next;
     char dir_file_full_path[MAX_PATH];
@@ -68,7 +68,7 @@ bool for_each_file(const char* dir, pfn_file do_file, pfn_dir do_dir, void* user
     WIN32_FIND_DATA FindFileData;
     HANDLE hFind = INVALID_HANDLE_VALUE;
     dir_file_node* node = (dir_file_node*)memory_unit_alloc(dir_file_node_unit, 512);
-    
+
     dir_file_node* dir_list_head = 0;
     dir_file_node* dir_list_tail = 0;
 
@@ -76,34 +76,34 @@ bool for_each_file(const char* dir, pfn_file do_file, pfn_dir do_dir, void* user
 
     strncpy(node->dir_file_full_path, dir, sizeof(node->dir_file_full_path));
 
-    switch (node->dir_file_full_path[strlen(node->dir_file_full_path)-1])
+    switch (node->dir_file_full_path[strlen(node->dir_file_full_path) - 1])
     {
     case '/':
     case '\\':
-        {
-            strcat(node->dir_file_full_path, "*");
-        }
-        break;
+    {
+        strcat(node->dir_file_full_path, "*");
+    }
+    break;
     case '*':
-        {
+    {
 
-        }
-        break;
+    }
+    break;
     default:
-        {
-            strcat(node->dir_file_full_path, "/*");
-        }
+    {
+        strcat(node->dir_file_full_path, "/*");
+    }
     }
 
     dir_list_head = node;
     dir_list_tail = node;
     node->next = 0;
 
-    do 
+    do
     {
         hFind = FindFirstFile(dir_list_head->dir_file_full_path, &FindFileData);
 
-        dir_list_head->dir_file_full_path[strlen(dir_list_head->dir_file_full_path)-1] = 0;
+        dir_list_head->dir_file_full_path[strlen(dir_list_head->dir_file_full_path) - 1] = 0;
 
         if (INVALID_HANDLE_VALUE == hFind)
         {
@@ -112,7 +112,7 @@ bool for_each_file(const char* dir, pfn_file do_file, pfn_dir do_dir, void* user
         }
         else
         {
-            if ((FILE_ATTRIBUTE_DIRECTORY & FindFileData.dwFileAttributes) && (strcmp(FindFileData.cFileName, ".")!=0) &&(strcmp(FindFileData.cFileName, "..")!=0))
+            if ((FILE_ATTRIBUTE_DIRECTORY & FindFileData.dwFileAttributes) && (strcmp(FindFileData.cFileName, ".") != 0) && (strcmp(FindFileData.cFileName, "..") != 0))
             {
                 node = (dir_file_node*)memory_unit_alloc(dir_file_node_unit, 512);
                 ++alloc_count;
@@ -134,7 +134,7 @@ bool for_each_file(const char* dir, pfn_file do_file, pfn_dir do_dir, void* user
             }
             else
             {
-                if ((strcmp(FindFileData.cFileName, ".")!=0) && (strcmp(FindFileData.cFileName, "..")!=0))
+                if ((strcmp(FindFileData.cFileName, ".") != 0) && (strcmp(FindFileData.cFileName, "..") != 0))
                 {
                     if (do_file)
                     {
@@ -149,7 +149,7 @@ bool for_each_file(const char* dir, pfn_file do_file, pfn_dir do_dir, void* user
 
             while (FindNextFile(hFind, &FindFileData) != 0)
             {
-                if ((FILE_ATTRIBUTE_DIRECTORY & FindFileData.dwFileAttributes) && (strcmp(FindFileData.cFileName, ".")!=0) &&(strcmp(FindFileData.cFileName, "..")!=0))
+                if ((FILE_ATTRIBUTE_DIRECTORY & FindFileData.dwFileAttributes) && (strcmp(FindFileData.cFileName, ".") != 0) && (strcmp(FindFileData.cFileName, "..") != 0))
                 {
                     node = (dir_file_node*)memory_unit_alloc(dir_file_node_unit, 512);
                     ++alloc_count;
@@ -171,7 +171,7 @@ bool for_each_file(const char* dir, pfn_file do_file, pfn_dir do_dir, void* user
                 }
                 else
                 {
-                    if ((strcmp(FindFileData.cFileName, ".")!=0) && (strcmp(FindFileData.cFileName, "..")!=0))
+                    if ((strcmp(FindFileData.cFileName, ".") != 0) && (strcmp(FindFileData.cFileName, "..") != 0))
                     {
                         if (do_file)
                         {

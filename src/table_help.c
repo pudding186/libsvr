@@ -46,7 +46,7 @@ void* quick_tree_find(HRBTREE tree, size_t idx)
     return 0;
 }
 
-void* tree_find_int64( HRBTREE tree, unsigned long long key )
+void* tree_find_int64(HRBTREE tree, unsigned long long key)
 {
     HRBNODE node = rb_tree_find_int64(tree, key);
     if (node)
@@ -68,7 +68,7 @@ void* tree_find_int(HRBTREE tree, unsigned long key)
     return 0;
 }
 
-void* tree_find_str( HRBTREE tree, const char* key )
+void* tree_find_str(HRBTREE tree, const char* key)
 {
     HRBNODE node = rb_tree_find_str(tree, key);
     if (node)
@@ -109,7 +109,7 @@ HRBTREE quick_tree(HRBTREE tree, size_t elapse)
     int_key_group* key_group = 0;
 
     size_t value_group_count = 64;
-    void** value_group = (void**)libsvr_memory_manager_alloc(value_group_count*sizeof(void*));
+    void** value_group = (void**)libsvr_memory_manager_alloc(value_group_count * sizeof(void*));
     size_t group_count = 0;
 
     HRBNODE node = rb_first(tree);
@@ -129,8 +129,8 @@ HRBTREE quick_tree(HRBTREE tree, size_t elapse)
                         void** tmp;
                         value_group_count += 1024;
 
-                        tmp = (void**)libsvr_memory_manager_alloc(value_group_count*sizeof(void*));
-                        memcpy(tmp, value_group, group_count*sizeof(void*));
+                        tmp = (void**)libsvr_memory_manager_alloc(value_group_count * sizeof(void*));
+                        memcpy(tmp, value_group, group_count * sizeof(void*));
                         libsvr_memory_manager_free(value_group);
                         value_group = tmp;
                     }
@@ -144,8 +144,8 @@ HRBTREE quick_tree(HRBTREE tree, size_t elapse)
                     void** tmp;
                     value_group_count += 1024;
 
-                    tmp = (void**)libsvr_memory_manager_alloc(value_group_count*sizeof(void*));
-                    memcpy(tmp, value_group, group_count*sizeof(void*));
+                    tmp = (void**)libsvr_memory_manager_alloc(value_group_count * sizeof(void*));
+                    memcpy(tmp, value_group, group_count * sizeof(void*));
                     libsvr_memory_manager_free(value_group);
                     value_group = tmp;
                 }
@@ -154,8 +154,8 @@ HRBTREE quick_tree(HRBTREE tree, size_t elapse)
             }
             else
             {
-                void** real_value_group = (void**)libsvr_memory_manager_alloc(group_count*sizeof(void*));
-                memcpy(real_value_group, value_group, group_count*sizeof(void*));
+                void** real_value_group = (void**)libsvr_memory_manager_alloc(group_count * sizeof(void*));
+                memcpy(real_value_group, value_group, group_count * sizeof(void*));
                 rb_tree_insert_user(new_tree, key_group, real_value_group);
 
                 key_group = (int_key_group*)libsvr_memory_manager_alloc(sizeof(int_key_group));
@@ -178,8 +178,8 @@ HRBTREE quick_tree(HRBTREE tree, size_t elapse)
 
     if (key_group)
     {
-        void** real_value_group = (void**)libsvr_memory_manager_alloc(group_count*sizeof(void*));
-        memcpy(real_value_group, value_group, group_count*sizeof(void*));
+        void** real_value_group = (void**)libsvr_memory_manager_alloc(group_count * sizeof(void*));
+        memcpy(real_value_group, value_group, group_count * sizeof(void*));
         rb_tree_insert_user(new_tree, key_group, real_value_group);
     }
 

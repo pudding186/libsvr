@@ -35,41 +35,41 @@ static __inline void _rb_link_node(HRBTREE root, HRBNODE node, HRBNODE parent, H
     {
         if (&(parent->rb_left) == rb_link)
         {
-			if (root->head == parent)
-			{
-				node->list_next = parent;
-				node->list_prev = 0;
+            if (root->head == parent)
+            {
+                node->list_next = parent;
+                node->list_prev = 0;
 
-				parent->list_prev = node;
-				root->head = node;
-			}
-			else
-			{
-				node->list_next = parent;
-				node->list_prev = parent->list_prev;
+                parent->list_prev = node;
+                root->head = node;
+            }
+            else
+            {
+                node->list_next = parent;
+                node->list_prev = parent->list_prev;
 
-				parent->list_prev->list_next = node;
-				parent->list_prev = node;
-			}
+                parent->list_prev->list_next = node;
+                parent->list_prev = node;
+            }
         }
         else
         {
-			if (root->tail == parent)
-			{
-				node->list_next = 0;
-				node->list_prev = parent;
+            if (root->tail == parent)
+            {
+                node->list_next = 0;
+                node->list_prev = parent;
 
-				parent->list_next = node;
-				root->tail = node;
-			}
-			else
-			{
-				node->list_next = parent->list_next;
-				node->list_prev = parent;
+                parent->list_next = node;
+                root->tail = node;
+            }
+            else
+            {
+                node->list_next = parent->list_next;
+                node->list_prev = parent;
 
-				parent->list_next->list_prev = node;
-				parent->list_next = node;
-			}
+                parent->list_next->list_prev = node;
+                parent->list_next = node;
+            }
         }
     }
     else
@@ -338,7 +338,8 @@ void rb_tree_erase(HRBTREE root, HRBNODE node)
                     old->rb_parent->rb_left = node;
                 else
                     old->rb_parent->rb_right = node;
-            } else
+            }
+            else
                 root->root = node;
 
             child = node->rb_right;
@@ -347,7 +348,8 @@ void rb_tree_erase(HRBTREE root, HRBNODE node)
 
             if (parent == old) {
                 parent = node;
-            } else {
+            }
+            else {
                 if (child)
                     child->rb_parent = parent;
 
@@ -381,7 +383,7 @@ void rb_tree_erase(HRBTREE root, HRBNODE node)
         else
             root->root = child;
 
-color:
+    color:
         if (color == RB_BLACK)
             _rb_erase_balance(child, parent, root);
         _rb_erase_list(root, del);
@@ -508,7 +510,7 @@ HRBNODE rb_tree_insert_int(HRBTREE tree, int key, void* value)
         }
     }
 
-    node = (HRBNODE)memory_unit_alloc(tree->node_unit, 4*1024);
+    node = (HRBNODE)memory_unit_alloc(tree->node_unit, 4 * 1024);
 
     node->key.key_int = key;
     node->value.value_user = value;
@@ -544,7 +546,7 @@ bool rb_tree_try_insert_int(HRBTREE tree, int key, void* value, HRBNODE* insert_
         }
     }
 
-    node = (HRBNODE)memory_unit_alloc(tree->node_unit, 4*1024);
+    node = (HRBNODE)memory_unit_alloc(tree->node_unit, 4 * 1024);
 
     node->key.key_int = key;
     node->value.value_user = value;
@@ -582,7 +584,7 @@ HRBNODE rb_tree_insert_int64(HRBTREE tree, long long key, void* value)
         }
     }
 
-    node = (HRBNODE)memory_unit_alloc(tree->node_unit, 4*1024);
+    node = (HRBNODE)memory_unit_alloc(tree->node_unit, 4 * 1024);
 
     node->key.key_int64 = key;
     node->value.value_user = value;
@@ -618,7 +620,7 @@ bool rb_tree_try_insert_int64(HRBTREE tree, long long key, void* value, HRBNODE*
         }
     }
 
-    node = (HRBNODE)memory_unit_alloc(tree->node_unit, 4*1024);
+    node = (HRBNODE)memory_unit_alloc(tree->node_unit, 4 * 1024);
 
     node->key.key_int64 = key;
     node->value.value_user = value;
@@ -659,7 +661,7 @@ HRBNODE rb_tree_insert_str(HRBTREE tree, const char* key, void* value)
         }
     }
 
-    node = (HRBNODE)memory_unit_alloc(tree->node_unit, 4*1024);
+    node = (HRBNODE)memory_unit_alloc(tree->node_unit, 4 * 1024);
 
     node->key.key_str = key;
     node->value.value_user = value;
@@ -697,7 +699,7 @@ bool rb_tree_try_insert_str(HRBTREE tree, const char* key, void* value, HRBNODE*
         }
     }
 
-    node = (HRBNODE)memory_unit_alloc(tree->node_unit, 4*1024);
+    node = (HRBNODE)memory_unit_alloc(tree->node_unit, 4 * 1024);
 
     node->key.key_str = key;
     node->value.value_user = value;
@@ -763,7 +765,7 @@ HRBNODE rb_tree_insert_user(HRBTREE tree, void* key, void* value)
         }
     }
 
-    node = (HRBNODE)memory_unit_alloc(tree->node_unit, 4*1024);
+    node = (HRBNODE)memory_unit_alloc(tree->node_unit, 4 * 1024);
 
     node->key.key_user = key;
     node->value.value_user = value;
@@ -825,7 +827,7 @@ bool rb_tree_try_insert_user(HRBTREE tree, void* key, void* value, HRBNODE* inse
         }
     }
 
-    node = (HRBNODE)memory_unit_alloc(tree->node_unit, 4*1024);
+    node = (HRBNODE)memory_unit_alloc(tree->node_unit, 4 * 1024);
 
     node->key.key_user = key;
     node->value.value_user = value;
@@ -993,27 +995,27 @@ HRBNODE rb_tree_find_int64_nearby(HRBTREE tree, long long key)
     return nearby_node;
 }
 
-int rb_node_key_int( HRBNODE node )
+int rb_node_key_int(HRBNODE node)
 {
     return node->key.key_int;
 }
 
-long long rb_node_key_int64( HRBNODE node )
+long long rb_node_key_int64(HRBNODE node)
 {
     return node->key.key_int64;
 }
 
-const char* rb_node_key_str( HRBNODE node )
+const char* rb_node_key_str(HRBNODE node)
 {
     return node->key.key_str;
 }
 
-void* rb_node_key_user( HRBNODE node )
+void* rb_node_key_user(HRBNODE node)
 {
     return node->key.key_user;
 }
 
-void* rb_node_value( HRBNODE node )
+void* rb_node_value(HRBNODE node)
 {
     return node->value.value_user;
 }
@@ -1023,7 +1025,7 @@ void rb_node_set_value(HRBNODE node, void* new_value)
     node->value.value_user = new_value;
 }
 
-int rb_node_value_int(HRBNODE node )
+int rb_node_value_int(HRBNODE node)
 {
     return node->value.value_int;
 }
@@ -1033,7 +1035,7 @@ void rb_node_set_value_int(HRBNODE node, int value_int)
     node->value.value_int = value_int;
 }
 
-long long rb_node_value_int64(HRBNODE node )
+long long rb_node_value_int64(HRBNODE node)
 {
     return node->value.value_int64;
 }

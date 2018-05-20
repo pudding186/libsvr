@@ -42,7 +42,7 @@
 #define DELAY_CLOSE_SOCKET      15
 #define DELAY_SEND_CHECK        5
 
-typedef struct st_event_establish 
+typedef struct st_event_establish
 {
     struct st_iocp_tcp_listener* listener;
 }event_establish;
@@ -278,7 +278,7 @@ void* _iocp_tcp_manager_alloc_memory(HNETMANAGER mgr, int buffer_size)
         unit = (HMEMORYUNIT)rb_node_value(memory_node);
     }
 
-    return memory_unit_alloc(unit, 4*1024);
+    return memory_unit_alloc(unit, 4 * 1024);
 }
 
 void _iocp_tcp_manager_free_memory(HNETMANAGER mgr, void* mem, int buffer_size)
@@ -378,27 +378,27 @@ void _log_evt(HNETMANAGER mgr, size_t evt_size)
 {
     FILE* log = fopen("./net_event.log", "a");
     fprintf(log, "============================\n");
-    fprintf(log,    "pop_connect_fail = %llu\n"
-                    "pop_data = %llu\n"
-                    "pop_establish = %llu\n"
-                    "pop_module_error = %llu\n"
-                    "pop_system_error = %llu\n"
-                    "pop_recv_active = %llu\n"
-                    "pop_terminate = %llu\n"
-                    "push_connect_fail = %llu\n"
-                    "push_data = %llu\n"
-                    "push_establish = %llu\n"
-                    "push_module_error = %llu\n"
-                    "push_system_error = %llu\n"
-                    "push_recv_active = %llu\n"
-                    "push_terminate = %llu\n"
-                    "undo_connect_fail = %llu\n"
-                    "undo_data = %llu\n"
-                    "undo_establish = %llu\n"
-                    "undo_module_error = %llu\n"
-                    "undo_system_error = %llu\n"
-                    "undo_recv_active = %llu\n"
-                    "undo_terminate = %llu\n",
+    fprintf(log, "pop_connect_fail = %llu\n"
+        "pop_data = %llu\n"
+        "pop_establish = %llu\n"
+        "pop_module_error = %llu\n"
+        "pop_system_error = %llu\n"
+        "pop_recv_active = %llu\n"
+        "pop_terminate = %llu\n"
+        "push_connect_fail = %llu\n"
+        "push_data = %llu\n"
+        "push_establish = %llu\n"
+        "push_module_error = %llu\n"
+        "push_system_error = %llu\n"
+        "push_recv_active = %llu\n"
+        "push_terminate = %llu\n"
+        "undo_connect_fail = %llu\n"
+        "undo_data = %llu\n"
+        "undo_establish = %llu\n"
+        "undo_module_error = %llu\n"
+        "undo_system_error = %llu\n"
+        "undo_recv_active = %llu\n"
+        "undo_terminate = %llu\n",
         mgr->m_pop_connect_fail,
         mgr->m_pop_data,
         mgr->m_pop_establish,
@@ -679,16 +679,16 @@ void _iocp_tcp_socket_on_recv(HSESSION socket, BOOL ret, DWORD trans_byte)
     switch (trans_byte)
     {
     case 0:
-        {
-            _iocp_tcp_socket_close(socket, ERROR_NONE);
-            return;
-        }
-        break;
+    {
+        _iocp_tcp_socket_close(socket, ERROR_NONE);
+        return;
+    }
+    break;
     case 0xffffffff:
-        {
-            trans_byte = 0;
-        }
-        break;
+    {
+        trans_byte = 0;
+    }
+    break;
     }
 
     if (trans_byte)
@@ -815,7 +815,7 @@ bool _iocp_tcp_socket_post_connect_req(HSESSION socket, BOOL reuse_addr)
 
     ++socket->recv_req;
 
-    socket->iocp_recv_data.operation= IOCP_OPT_CONNECT_REQ;
+    socket->iocp_recv_data.operation = IOCP_OPT_CONNECT_REQ;
 
     if (PostQueuedCompletionStatus(socket->mgr->iocp_port, reuse_addr, (ULONG_PTR)socket, &socket->iocp_recv_data.over_lapped))
     {
@@ -828,7 +828,7 @@ bool _iocp_tcp_socket_post_connect_req(HSESSION socket, BOOL reuse_addr)
 
 void _iocp_tcp_socket_connect_ex(HSESSION socket_ptr, BOOL reuse_addr)
 {
-    struct sockaddr_in addr={0};
+    struct sockaddr_in addr = { 0 };
 
     ++socket_ptr->recv_ack;
 
@@ -909,7 +909,7 @@ ERROR_DEAL:
 
 void _iocp_tcp_socket_on_connect(HSESSION socket, BOOL ret)
 {
-    struct sockaddr_in addr = {0};
+    struct sockaddr_in addr = { 0 };
     int addr_len = sizeof(addr);
 
     ++socket->recv_ack;
@@ -1036,8 +1036,8 @@ bool _iocp_tcp_listener_post_accept_ex(HLISTENER listener, struct st_iocp_listen
         accept_socket,
         iocp_listen_data_ptr->data.wsa_buf.buf,
         0,
-        sizeof(SOCKADDR_IN)+16,
-        sizeof(SOCKADDR_IN)+16,
+        sizeof(SOCKADDR_IN) + 16,
+        sizeof(SOCKADDR_IN) + 16,
         &bytes,
         &(iocp_listen_data_ptr->data.over_lapped));
 
@@ -1077,7 +1077,7 @@ void _iocp_tcp_listener_on_accept(HLISTENER listener, BOOL ret, struct st_iocp_l
 
     INT32 remote_addr_len = sizeof(struct sockaddr_in);
     INT32 local_addr_len = sizeof(struct sockaddr_in);
-    INT32 addr_len = sizeof(struct sockaddr_in)+16;
+    INT32 addr_len = sizeof(struct sockaddr_in) + 16;
 
     iocp_listen_data_ptr->data.listener = 0;
 
@@ -1190,7 +1190,7 @@ CHECK_POST_ACCEPT_BEGIN:
 bool _iocp_tcp_listener_listen(HLISTENER listener, int max_accept_ex_num, const char* ip, UINT16 port, bool bReUseAddr)
 {
     int i;
-    struct sockaddr_in addr={0};
+    struct sockaddr_in addr = { 0 };
 
     listener->socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 
@@ -1213,7 +1213,7 @@ bool _iocp_tcp_listener_listen(HLISTENER listener, int max_accept_ex_num, const 
 
     addr.sin_family = AF_INET;
 
-    if((!strcmp(ip, "0.0.0.0")) || (!strcmp(ip, "0")))
+    if ((!strcmp(ip, "0.0.0.0")) || (!strcmp(ip, "0")))
         addr.sin_addr.s_addr = htonl(INADDR_ANY);
     else
         addr.sin_addr.s_addr = inet_addr(ip);
@@ -1256,13 +1256,13 @@ bool _iocp_tcp_listener_listen(HLISTENER listener, int max_accept_ex_num, const 
 
     for (i = 0; i < listener->max_accept_ex_num; i++)
     {
-        listener->arry_iocp_data[i].data.wsa_buf.buf = listener->arry_addr_cache+i*MAX_ADDR_SIZE;
+        listener->arry_iocp_data[i].data.wsa_buf.buf = listener->arry_addr_cache + i * MAX_ADDR_SIZE;
         listener->arry_iocp_data[i].data.wsa_buf.len = MAX_ADDR_SIZE;
         listener->arry_iocp_data[i].data.operation = IOCP_OPT_ACCEPT;
         listener->arry_iocp_data[i].data.listener = 0;
 
 
-        if (!_iocp_tcp_listener_post_accept_ex(listener, listener->arry_iocp_data+i))
+        if (!_iocp_tcp_listener_post_accept_ex(listener, listener->arry_iocp_data + i))
         {
             return false;
         }
@@ -1517,7 +1517,7 @@ bool _start_iocp_thread(HNETMANAGER mgr)
         SYSTEM_INFO sys_info;
         GetSystemInfo(&sys_info);
 
-        mgr->work_thread_num = sys_info.dwNumberOfProcessors*2+2;
+        mgr->work_thread_num = sys_info.dwNumberOfProcessors * 2 + 2;
     }
 
     mgr->work_threads = (HANDLE*)malloc(sizeof(HANDLE)*mgr->work_thread_num);
@@ -1753,7 +1753,7 @@ bool _set_wsa_function(HNETMANAGER mgr)
         return false;
     }
 
-    if (WSAIoctl(tmp_sock, 
+    if (WSAIoctl(tmp_sock,
         SIO_GET_EXTENSION_FUNCTION_POINTER,
         &func_guid,
         sizeof(func_guid),
@@ -1846,7 +1846,7 @@ void destroy_iocp_tcp(HNETMANAGER mgr)
 
 extern HRBTREE create_rb_tree_ex(key_cmp cmp_func);
 
-HNETMANAGER create_iocp_tcp(pfn_on_establish func_on_establish, pfn_on_terminate func_on_terminate, 
+HNETMANAGER create_iocp_tcp(pfn_on_establish func_on_establish, pfn_on_terminate func_on_terminate,
     pfn_on_error func_on_error, pfn_on_recv func_on_recv,
     int max_socket_num, int max_io_thread_num, int max_accept_ex_num)
 {
@@ -1934,7 +1934,7 @@ HNETMANAGER create_iocp_tcp(pfn_on_establish func_on_establish, pfn_on_terminate
     free(arry_socket_ptr);
     arry_socket_ptr = 0;
 
-    mgr->evt_queue = create_loop_cache(mgr->max_socket_num*5*sizeof(struct st_net_event), 0);
+    mgr->evt_queue = create_loop_cache(mgr->max_socket_num * 5 * sizeof(struct st_net_event), 0);
     if (!mgr->evt_queue)
     {
         goto ERROR_DEAL;
@@ -1968,9 +1968,9 @@ ERROR_DEAL:
 }
 
 HSESSION iocp_tcp_connect(HNETMANAGER mgr,
-    const char* ip, unsigned short port, int recv_buf_size, 
-    int send_buf_size, pfn_parse_packet func, bool reuse_addr, 
-    const char* bind_ip, unsigned short bind_port )
+    const char* ip, unsigned short port, int recv_buf_size,
+    int send_buf_size, pfn_parse_packet func, bool reuse_addr,
+    const char* bind_ip, unsigned short bind_port)
 {
     HSESSION socket = _iocp_tcp_manager_alloc_socket(mgr, recv_buf_size, send_buf_size);
 
@@ -2020,7 +2020,7 @@ HSESSION iocp_tcp_connect(HNETMANAGER mgr,
 }
 
 HLISTENER iocp_tcp_listen(HNETMANAGER mgr,
-    const char* ip, unsigned short port, int recv_buf_size, int send_buf_size, 
+    const char* ip, unsigned short port, int recv_buf_size, int send_buf_size,
     pfn_parse_packet func, bool reuse_addr)
 {
     HLISTENER listener = (HLISTENER)malloc(sizeof(struct st_iocp_tcp_listener));

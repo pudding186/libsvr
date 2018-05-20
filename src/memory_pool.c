@@ -15,7 +15,7 @@ mem_block* _create_memory_block(mem_unit* unit, size_t unit_count)
     unsigned char* ptr;
     size_t i;
     mem_block* block;
-    size_t block_size = sizeof(mem_block) + unit_count*(sizeof(void*)+unit->unit_size);
+    size_t block_size = sizeof(mem_block) + unit_count * (sizeof(void*) + unit->unit_size);
 
     block = (mem_block*)malloc(block_size);
 
@@ -26,10 +26,10 @@ mem_block* _create_memory_block(mem_unit* unit, size_t unit_count)
 
         ptr = (unsigned char*)block + sizeof(mem_block);
 
-        for (i = 0; i < unit_count-1; i++)
+        for (i = 0; i < unit_count - 1; i++)
         {
-            *((void**)ptr) = ptr + sizeof(void*)+unit->unit_size;
-            ptr += sizeof(void*)+unit->unit_size;
+            *((void**)ptr) = ptr + sizeof(void*) + unit->unit_size;
+            ptr += sizeof(void*) + unit->unit_size;
         }
 
         *((void**)ptr) = unit->unit_free_head;
@@ -84,8 +84,8 @@ void* memory_unit_alloc(HMEMORYUNIT unit, size_t grow_size)
         {
             grow_size = sizeof(mem_block);
         }
-        
-        unit_count = (grow_size - sizeof(mem_block))/(sizeof(void*)+unit->unit_size);
+
+        unit_count = (grow_size - sizeof(mem_block)) / (sizeof(void*) + unit->unit_size);
 
         if (unit_count <= 0)
         {
@@ -288,7 +288,7 @@ void* memory_pool_alloc(HMEMORYPOOL pool, size_t mem_size)
     if (!unit->unit_free_head)
     {
         size_t last_unit_size = unit->use_mem_size;
-        size_t unit_count = (pool->grow - sizeof(mem_block))/(sizeof(void*)+unit->unit_size);
+        size_t unit_count = (pool->grow - sizeof(mem_block)) / (sizeof(void*) + unit->unit_size);
         if (unit_count <= 0)
         {
             unit_count = 1;
@@ -385,9 +385,9 @@ void memory_pool_free(HMEMORYPOOL pool, void* mem)
 
 void memory_pool_set_grow(HMEMORYPOOL pool, size_t grow_size)
 {
-    if (grow_size <= 4*1024)
+    if (grow_size <= 4 * 1024)
     {
-        pool->grow = 4*1024;
+        pool->grow = 4 * 1024;
     }
     else
         pool->grow = grow_size;
@@ -431,7 +431,7 @@ HMEMORYMANAGER create_memory_manager(size_t align, size_t start_size, size_t max
 
         avl_tree_insert_int64(&mgr->mem_pool_map, pool->max_mem_size, pool);
         align *= grow_power;
-        last_start_size = start_size+1;
+        last_start_size = start_size + 1;
         start_size *= grow_power;
     }
 

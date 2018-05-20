@@ -222,7 +222,7 @@ namespace SMemory
 
     //////////////////////////////////////////////////////////////////////////
 
-    void Delete( void* ptr )
+    void Delete(void* ptr)
     {
         if (!ptr)
         {

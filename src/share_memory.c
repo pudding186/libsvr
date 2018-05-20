@@ -48,37 +48,37 @@ HSHMMGR create_shm_mgr(void)
     shm_info_mgr->info_unit = _default_shm_info_unit();
     shm_info_mgr->share_memory_info_map = create_rb_tree(0);
 
-	return shm_info_mgr;
+    return shm_info_mgr;
 }
 
 void destroy_shm_mgr(HSHMMGR mgr)
 {
-	HRBNODE shm_node = rb_first(mgr->share_memory_info_map);
+    HRBNODE shm_node = rb_first(mgr->share_memory_info_map);
 
-	while (shm_node)
-	{
-		HSHMINFO shm_info = (HSHMINFO)rb_node_value(shm_node);
-		UnmapViewOfFile(shm_info->mem);
-		CloseHandle(shm_info->handle);
-		memory_unit_free(mgr->info_unit, shm_info);
+    while (shm_node)
+    {
+        HSHMINFO shm_info = (HSHMINFO)rb_node_value(shm_node);
+        UnmapViewOfFile(shm_info->mem);
+        CloseHandle(shm_info->handle);
+        memory_unit_free(mgr->info_unit, shm_info);
 
-		shm_node = rb_next(shm_node);
-	}
+        shm_node = rb_next(shm_node);
+    }
 
-	destroy_rb_tree(mgr->share_memory_info_map);
+    destroy_rb_tree(mgr->share_memory_info_map);
 
-	memory_unit_free(_default_shm_info_mgr_unit(), mgr);
+    memory_unit_free(_default_shm_info_mgr_unit(), mgr);
 }
 
 HSHMINFO shm_get_info(HSHMMGR mgr, int key)
 {
-	HRBNODE shm_node = rb_tree_find_int(mgr->share_memory_info_map, key);
-	if (shm_node)
-	{
-		return (HSHMINFO)rb_node_value(shm_node);
-	}
+    HRBNODE shm_node = rb_tree_find_int(mgr->share_memory_info_map, key);
+    if (shm_node)
+    {
+        return (HSHMINFO)rb_node_value(shm_node);
+    }
 
-	return 0;
+    return 0;
 }
 
 void* shm_alloc(HSHMMGR mgr, int key, unsigned int size)
@@ -88,70 +88,70 @@ void* shm_alloc(HSHMMGR mgr, int key, unsigned int size)
     char key_name[64];
     SECURITY_ATTRIBUTES sa = { 0 };
     SECURITY_DESCRIPTOR sd = { 0 };
-	HSHMINFO shm_info = shm_get_info(mgr, key);
-	if (shm_info)
-	{
-		return 0;
-	}
+    HSHMINFO shm_info = shm_get_info(mgr, key);
+    if (shm_info)
+    {
+        return 0;
+    }
 
-	InitializeSecurityDescriptor(&sd, SECURITY_DESCRIPTOR_REVISION);
-	SetSecurityDescriptorDacl(&sd, TRUE, NULL, FALSE);
+    InitializeSecurityDescriptor(&sd, SECURITY_DESCRIPTOR_REVISION);
+    SetSecurityDescriptorDacl(&sd, TRUE, NULL, FALSE);
 
-	sa.nLength = sizeof(sa);
-	sa.lpSecurityDescriptor = &sd;
-	sa.bInheritHandle = FALSE;
+    sa.nLength = sizeof(sa);
+    sa.lpSecurityDescriptor = &sd;
+    sa.bInheritHandle = FALSE;
 
 
-	sprintf(key_name, "Global\\LIBSVR_%d", key);
+    sprintf(key_name, "Global\\LIBSVR_%d", key);
 
-	hHandle = CreateFileMapping(INVALID_HANDLE_VALUE, &sa, PAGE_READWRITE, 0, size, key_name);
+    hHandle = CreateFileMapping(INVALID_HANDLE_VALUE, &sa, PAGE_READWRITE, 0, size, key_name);
 
-	if (NULL == hHandle || GetLastError() == ERROR_ALREADY_EXISTS)
-	{
-		if (hHandle)
-		{
-			CloseHandle(hHandle);
-		}
-		return 0;
-	}
+    if (NULL == hHandle || GetLastError() == ERROR_ALREADY_EXISTS)
+    {
+        if (hHandle)
+        {
+            CloseHandle(hHandle);
+        }
+        return 0;
+    }
 
-	pTr = MapViewOfFile(hHandle, FILE_MAP_ALL_ACCESS, 0, 0, size);
+    pTr = MapViewOfFile(hHandle, FILE_MAP_ALL_ACCESS, 0, 0, size);
 
-	if (NULL == pTr)
-	{
-		CloseHandle(hHandle);
-		return 0;
-	}
+    if (NULL == pTr)
+    {
+        CloseHandle(hHandle);
+        return 0;
+    }
 
-	shm_info = memory_unit_alloc(mgr->info_unit, 4096);
-	shm_info->handle	= hHandle;
-	shm_info->key		= key;
-	shm_info->mem		= pTr;
-	shm_info->size		= size;
+    shm_info = memory_unit_alloc(mgr->info_unit, 4096);
+    shm_info->handle = hHandle;
+    shm_info->key = key;
+    shm_info->mem = pTr;
+    shm_info->size = size;
 
-	rb_tree_insert_int(mgr->share_memory_info_map, key, shm_info);
+    rb_tree_insert_int(mgr->share_memory_info_map, key, shm_info);
 
-	return pTr;
+    return pTr;
 }
 
 void shm_free(HSHMMGR mgr, int key)
 {
     HSHMINFO shm_info;
-	HRBNODE shm_node = rb_tree_find_int(mgr->share_memory_info_map, key);
+    HRBNODE shm_node = rb_tree_find_int(mgr->share_memory_info_map, key);
 
-	if (!shm_node)
-	{
-		return;
-	}
+    if (!shm_node)
+    {
+        return;
+    }
 
-	shm_info = (HSHMINFO)rb_node_value(shm_node);
+    shm_info = (HSHMINFO)rb_node_value(shm_node);
 
-	UnmapViewOfFile(shm_info->mem);
-	CloseHandle(shm_info->handle);
+    UnmapViewOfFile(shm_info->mem);
+    CloseHandle(shm_info->handle);
 
-	rb_tree_erase(mgr->share_memory_info_map, shm_node);
+    rb_tree_erase(mgr->share_memory_info_map, shm_node);
 
-	memory_unit_free(mgr->info_unit, shm_info);
+    memory_unit_free(mgr->info_unit, shm_info);
 }
 
 #else

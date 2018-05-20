@@ -29,29 +29,29 @@ extern void (free_str_fragment_array)(str_fragment_array* array);
 
 template <size_t N>
 inline void StrSafeCopy(char(&Destination)[N], const char* Source) throw() {
-	static_assert(N > 0, "StrSafeCopy dst size == 0");
+    static_assert(N > 0, "StrSafeCopy dst size == 0");
 
-	// initialize for check below
-	if (NULL == Source) {
-		Destination[0] = '\0';
-		return;
-	}
+    // initialize for check below
+    if (NULL == Source) {
+        Destination[0] = '\0';
+        return;
+    }
 
-	size_t nSrcLen = strnlen(Source, N - 1);
-	memcpy(Destination, Source, nSrcLen + 1);
-	Destination[N - 1] = '\0';
+    size_t nSrcLen = strnlen(Source, N - 1);
+    memcpy(Destination, Source, nSrcLen + 1);
+    Destination[N - 1] = '\0';
 }
 
 template <typename T>
 inline void StrSafeCopy(T& Destination, const char* Source, size_t len)
 {
-	// Use cast to ensure that we only allow character arrays
-	(static_cast<char[sizeof(Destination)]>(Destination));
-	size_t size = sizeof(Destination);
+    // Use cast to ensure that we only allow character arrays
+    (static_cast<char[sizeof(Destination)]>(Destination));
+    size_t size = sizeof(Destination);
 
-	size_t l = min(size - 1, len);
-	strncpy(Destination, Source, l);
-	Destination[l] = 0;
+    size_t l = min(size - 1, len);
+    strncpy(Destination, Source, l);
+    Destination[l] = 0;
 }
 
 
@@ -112,7 +112,7 @@ class CFuncPerformanceInfo
 {
     friend class CFuncPerformanceMgr;
 protected:
-    CFuncPerformanceInfo* next;
+    CFuncPerformanceInfo * next;
 public:
     const char* func_name;
     unsigned long long elapse_cycles;
@@ -137,13 +137,13 @@ protected:
 private:
 };
 
-extern HFUNCPERFMGR (CreateFuncPerfMgr)(int shm_key);
+extern HFUNCPERFMGR(CreateFuncPerfMgr)(int shm_key);
 extern void (DestroyFuncPerfMgr)(HFUNCPERFMGR mgr);
 extern CFuncPerformanceInfo* (FuncPerfFirst)(HFUNCPERFMGR mgr);
 extern int (GetFuncStackTop)(HFUNCPERFMGR mgr);
 extern CFuncPerformanceInfo* (GetStackFuncPerfInfo)(HFUNCPERFMGR mgr, int idx);
 
-extern HFUNCPERFMGR (DefFuncPerfMgr)(void);
+extern HFUNCPERFMGR(DefFuncPerfMgr)(void);
 
 extern void (FuncStackToFile)(HFUNCPERFMGR mgr, const char* file_path);
 
