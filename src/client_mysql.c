@@ -37,6 +37,7 @@ HCLIENTMYSQL create_client_mysql(const char *host, unsigned int port,
     mysql_result.cur_mysql = 0;
     mysql_result.record_set = 0;
     mysql_result.affect_row = 0;
+    mysql_result.error_code = 0;
 
     client_mysql_ptr->real_mysql = mysql_init(0);
 
@@ -83,7 +84,7 @@ HCLIENTMYSQL create_client_mysql(const char *host, unsigned int port,
 
     mysql_result = client_mysql_query(client_mysql_ptr, "SHOW CHARACTER SET", (unsigned long)strlen("SHOW CHARACTER SET"));
 
-    if (!mysql_result.cur_mysql)
+    if (mysql_result.error_code)
     {
         if (err_info)
         {
@@ -144,7 +145,7 @@ HCLIENTMYSQL create_client_mysql(const char *host, unsigned int port,
         "select @@character_set_client, @@character_set_connection, @@character_set_results;",
         (unsigned long)strlen("select @@character_set_client, @@character_set_connection, @@character_set_results;"));
 
-    if (!mysql_result.cur_mysql)
+    if (mysql_result.error_code)
     {
         if (err_info)
         {
@@ -216,6 +217,7 @@ CLIENTMYSQLRES client_mysql_query(HCLIENTMYSQL client_mysql_ptr, const char* sql
     result.cur_mysql = 0;
     result.record_set = 0;
     result.affect_row = 0;
+    result.error_code = 0;
 
 QUERY:
 
@@ -230,7 +232,8 @@ QUERY:
 
     if (query_ret)
     {
-        switch (mysql_errno(client_mysql_ptr->real_mysql))
+        result.error_code = mysql_errno(client_mysql_ptr->real_mysql);
+        switch (result.error_code)
         {
         case CR_SERVER_GONE_ERROR:
         case CR_SERVER_LOST:
@@ -238,6 +241,7 @@ QUERY:
             if (try_query_count < 3)
             {
                 try_query_count++;
+                result.error_code = 0;
                 mysql_ping(client_mysql_ptr->real_mysql);
                 goto QUERY;
             }
@@ -273,33 +277,16 @@ QUERY:
     }
 
     return result;
+}
 
-    //if (client_mysql_ptr->result.record_set)
-    //{
-    //    mysql_free_result(client_mysql_ptr->result.record_set);
-    //}
+bool client_mysql_result_success(HCLIENTMYSQLRES result)
+{
+    if (result)
+    {
+        return result->error_code == 0;
+    }
 
-    //client_mysql_ptr->result.cur_mysql = client_mysql_ptr->real_mysql;
-
-    //client_mysql_ptr->result.record_set = mysql_store_result(client_mysql_ptr->real_mysql);
-
-    //if (client_mysql_ptr->result.record_set)
-    //{
-    //    client_mysql_ptr->result.affect_row = 0;
-    //}
-    //else
-    //{
-    //    if (mysql_field_count(client_mysql_ptr->real_mysql) == 0)
-    //    {
-    //        client_mysql_ptr->result.affect_row = mysql_affected_rows(client_mysql_ptr->real_mysql);
-    //    }
-    //    else
-    //    {
-    //        return false;
-    //    }
-    //}
-
-    //return true;
+    return false;
 }
 
 //HCLIENTMYSQLRES client_mysql_get_result(HCLIENTMYSQL connection)
@@ -307,13 +294,12 @@ QUERY:
 //    return &connection->result;
 //}
 
-HCLIENTMYSQLRES client_mysql_next_result(HCLIENTMYSQLRES last_result, unsigned int* client_mysql_errno)
+HCLIENTMYSQLRES client_mysql_next_result(HCLIENTMYSQLRES last_result)
 {
     MYSQL* real_mysql = 0;
 
     if (!last_result)
     {
-        *client_mysql_errno = 0;
         return 0;
     }
 
@@ -333,13 +319,13 @@ HCLIENTMYSQLRES client_mysql_next_result(HCLIENTMYSQLRES last_result, unsigned i
         break;
     case -1:
     {
-        *client_mysql_errno = 0;
+        last_result->error_code = 0;
         return 0;
     }
     break;
     default:
     {
-        *client_mysql_errno = mysql_errno(real_mysql);
+        last_result->error_code = mysql_errno(real_mysql);
         return last_result;
     }
     }
@@ -358,12 +344,12 @@ HCLIENTMYSQLRES client_mysql_next_result(HCLIENTMYSQLRES last_result, unsigned i
         }
         else
         {
-            *client_mysql_errno = CR_NO_RESULT_SET;
+            last_result->error_code = CR_NO_RESULT_SET;
             return last_result;
         }
     }
 
-    *client_mysql_errno = 0;
+    last_result->error_code = 0;
     return last_result;
 }
 

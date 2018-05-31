@@ -35,6 +35,7 @@ extern "C" {
 
     typedef struct st_client_mysql_result
     {
+        unsigned int    error_code;
         MYSQL*          cur_mysql;
         MYSQL_RES*      record_set;
         my_ulonglong    affect_row;
@@ -60,7 +61,9 @@ extern "C" {
 
     extern CLIENTMYSQLRES (client_mysql_query)(HCLIENTMYSQL connection, const char* sql, unsigned long length);
 
-    extern HCLIENTMYSQLRES (client_mysql_next_result)(HCLIENTMYSQLRES last_result, unsigned int* client_mysql_errno);
+    extern bool (client_mysql_result_success)(HCLIENTMYSQLRES result);
+
+    extern HCLIENTMYSQLRES (client_mysql_next_result)(HCLIENTMYSQLRES last_result);
 
     extern void (client_mysql_free_result)(HCLIENTMYSQLRES result);
 
