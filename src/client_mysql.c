@@ -9,8 +9,17 @@
 typedef struct st_client_mysql
 {
     MYSQL*              real_mysql;
-    //client_mysql_result result;
 }client_mysql;
+
+bool client_mysql_result_success(HCLIENTMYSQLRES result)
+{
+    if (result)
+    {
+        return result->error_code == 0;
+    }
+
+    return false;
+}
 
 HCLIENTMYSQL create_client_mysql(const char *host, unsigned int port,
     const char *user, const char *passwd, const char* db, const char* charact_set,
@@ -84,7 +93,7 @@ HCLIENTMYSQL create_client_mysql(const char *host, unsigned int port,
 
     mysql_result = client_mysql_query(client_mysql_ptr, "SHOW CHARACTER SET", (unsigned long)strlen("SHOW CHARACTER SET"));
 
-    if (mysql_result.error_code)
+    if (!client_mysql_result_success(&mysql_result))
     {
         if (err_info)
         {
@@ -97,8 +106,6 @@ HCLIENTMYSQL create_client_mysql(const char *host, unsigned int port,
         destroy_client_mysql(client_mysql_ptr);
         return 0;
     }
-
-    //mysql_res_ptr = client_mysql_get_result(client_mysql_ptr);
 
     character_set_num = mysql_num_rows(mysql_result.record_set);
 
@@ -145,7 +152,7 @@ HCLIENTMYSQL create_client_mysql(const char *host, unsigned int port,
         "select @@character_set_client, @@character_set_connection, @@character_set_results;",
         (unsigned long)strlen("select @@character_set_client, @@character_set_connection, @@character_set_results;"));
 
-    if (mysql_result.error_code)
+    if (!client_mysql_result_success(&mysql_result))
     {
         if (err_info)
         {
@@ -158,8 +165,6 @@ HCLIENTMYSQL create_client_mysql(const char *host, unsigned int port,
         destroy_client_mysql(client_mysql_ptr);
         return 0;
     }
-
-    //mysql_res_ptr = client_mysql_get_result(client_mysql_ptr);
 
     value_data = client_mysql_row_field_value(&mysql_result, 0, 0);
     character_client = value_data.value;
@@ -194,11 +199,6 @@ HCLIENTMYSQL create_client_mysql(const char *host, unsigned int port,
 
 void destroy_client_mysql(HCLIENTMYSQL client_mysql_ptr)
 {
-    //if (client_mysql_ptr->result.record_set)
-    //{
-    //    mysql_free_result(client_mysql_ptr->result.record_set);
-    //}
-
     if (client_mysql_ptr->real_mysql)
     {
         mysql_close(client_mysql_ptr->real_mysql);
@@ -278,21 +278,6 @@ QUERY:
 
     return result;
 }
-
-bool client_mysql_result_success(HCLIENTMYSQLRES result)
-{
-    if (result)
-    {
-        return result->error_code == 0;
-    }
-
-    return false;
-}
-
-//HCLIENTMYSQLRES client_mysql_get_result(HCLIENTMYSQL connection)
-//{
-//    return &connection->result;
-//}
 
 HCLIENTMYSQLRES client_mysql_next_result(HCLIENTMYSQLRES last_result)
 {
@@ -456,74 +441,42 @@ unsigned long client_mysql_escape_string(HCLIENTMYSQL connection, char* src, uns
 
 unsigned char client_mysql_value_uint8(CLIENTMYSQLVALUE data)
 {
-    unsigned char value_uint8;
-
-    value_uint8 = (unsigned char)atoi(data.value);
-
-    return value_uint8;
+    return (unsigned char)atoi(data.value);
 }
 
 char client_mysql_value_int8(CLIENTMYSQLVALUE data)
 {
-    char value_int8;
-
-    value_int8 = (char)atoi(data.value);
-
-    return value_int8;
+    return (char)atoi(data.value);
 }
 
 unsigned short client_mysql_value_uint16(CLIENTMYSQLVALUE data)
 {
-    unsigned short value_uint16;
-
-    value_uint16 = (unsigned short)atoi(data.value);
-
-    return value_uint16;
+    return (unsigned short)atoi(data.value);
 }
 
 short client_mysql_value_int16(CLIENTMYSQLVALUE data)
 {
-    short value_int16;
-
-    value_int16 = (short)atoi(data.value);
-
-    return value_int16;
+    return (short)atoi(data.value);
 }
 
 unsigned int client_mysql_value_uint32(CLIENTMYSQLVALUE data)
 {
-    unsigned int value_uint32;
-
-    value_uint32 = (unsigned int)_strtoui64(data.value, 0, 10);
-
-    return value_uint32;
+    return (unsigned int)_strtoui64(data.value, 0, 10);
 }
 
 int client_mysql_value_int32(CLIENTMYSQLVALUE data)
 {
-    int value_int32;
-
-    value_int32 = atoi(data.value);
-
-    return value_int32;
+    return atoi(data.value);
 }
 
 unsigned long long client_mysql_value_uint64(CLIENTMYSQLVALUE data)
 {
-    unsigned long long value_uint64;
-
-    value_uint64 = _strtoui64(data.value, 0, 10);
-
-    return value_uint64;
+    return _strtoui64(data.value, 0, 10);
 }
 
 long long client_mysql_value_int64(CLIENTMYSQLVALUE data)
 {
-    long long value_int64;
-
-    value_int64 = _strtoi64(data.value, 0, 10);
-
-    return value_int64;
+    return _strtoi64(data.value, 0, 10);
 }
 
 const char* client_mysql_err(HCLIENTMYSQL connection)
