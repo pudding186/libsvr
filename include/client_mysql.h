@@ -31,7 +31,14 @@ extern "C" {
 
     typedef struct st_client_mysql*         HCLIENTMYSQL;
 
-    typedef struct st_client_mysql_result*  HCLIENTMYSQLRES;
+    //typedef struct st_client_mysql_result*  HCLIENTMYSQLRES;
+
+    typedef struct st_client_mysql_result
+    {
+        MYSQL*          cur_mysql;
+        MYSQL_RES*      record_set;
+        my_ulonglong    affect_row;
+    }CLIENTMYSQLRES, *HCLIENTMYSQLRES;
 
     typedef struct st_client_mysql_row
     {
@@ -45,17 +52,15 @@ extern "C" {
         unsigned long   size;
     }CLIENTMYSQLVALUE;
 
-    extern HCLIENTMYSQL(create_client_mysql)(const char *host, unsigned int port, const char *user,
+    extern HCLIENTMYSQL (create_client_mysql)(const char *host, unsigned int port, const char *user,
         const char *passwd, const char* db, const char* charact_set,
         char* err_info, size_t err_info_size);
 
     extern void (destroy_client_mysql)(HCLIENTMYSQL connection);
 
-    extern bool (client_mysql_query)(HCLIENTMYSQL connection, const char* sql, unsigned long length);
+    extern CLIENTMYSQLRES (client_mysql_query)(HCLIENTMYSQL connection, const char* sql, unsigned long length);
 
-    extern HCLIENTMYSQLRES(client_mysql_get_result)(HCLIENTMYSQL connection);
-
-    extern HCLIENTMYSQLRES(client_mysql_next_result)(HCLIENTMYSQLRES last_result, unsigned int* client_mysql_errno);
+    extern HCLIENTMYSQLRES (client_mysql_next_result)(HCLIENTMYSQLRES last_result, unsigned int* client_mysql_errno);
 
     extern void (client_mysql_free_result)(HCLIENTMYSQLRES result);
 
@@ -63,17 +68,17 @@ extern "C" {
 
     extern unsigned long long (client_mysql_result_affected)(HCLIENTMYSQLRES result);
 
-    extern CLIENTMYSQLROW(client_mysql_fetch_row)(HCLIENTMYSQLRES result);
+    extern CLIENTMYSQLROW (client_mysql_fetch_row)(HCLIENTMYSQLRES result);
 
     extern unsigned long long (client_mysql_rows_num)(HCLIENTMYSQLRES result);
 
     extern unsigned int (client_mysql_fields_num)(HCLIENTMYSQLRES result);
 
-    extern CLIENTMYSQLROW(client_mysql_row)(HCLIENTMYSQLRES result, unsigned long long row_index);
+    extern CLIENTMYSQLROW (client_mysql_row)(HCLIENTMYSQLRES result, unsigned long long row_index);
 
-    extern CLIENTMYSQLVALUE(client_mysql_value)(CLIENTMYSQLROW row, unsigned long field_index);
+    extern CLIENTMYSQLVALUE (client_mysql_value)(CLIENTMYSQLROW row, unsigned long field_index);
 
-    extern CLIENTMYSQLVALUE(client_mysql_row_field_value)(HCLIENTMYSQLRES result, unsigned long long row_index, unsigned long field_index);
+    extern CLIENTMYSQLVALUE (client_mysql_row_field_value)(HCLIENTMYSQLRES result, unsigned long long row_index, unsigned long field_index);
 
     extern unsigned char (client_mysql_value_uint8)(CLIENTMYSQLVALUE data);
 

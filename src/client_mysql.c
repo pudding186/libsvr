@@ -6,17 +6,10 @@
 
 ////////////////////////////////////////////////////////////////////////
 
-typedef struct st_client_mysql_result
-{
-    MYSQL*          cur_mysql;
-    MYSQL_RES*      record_set;
-    my_ulonglong    affect_row;
-}client_mysql_result;
-
 typedef struct st_client_mysql
 {
     MYSQL*              real_mysql;
-    client_mysql_result result;
+    //client_mysql_result result;
 }client_mysql;
 
 HCLIENTMYSQL create_client_mysql(const char *host, unsigned int port,
@@ -37,13 +30,13 @@ HCLIENTMYSQL create_client_mysql(const char *host, unsigned int port,
     char* character_connection;
     char* character_result;
 
-    HCLIENTMYSQLRES mysql_res_ptr = 0;
+    CLIENTMYSQLRES mysql_result;
 
     client_mysql* client_mysql_ptr = (client_mysql*)malloc(sizeof(client_mysql));
 
-    client_mysql_ptr->result.cur_mysql = 0;
-    client_mysql_ptr->result.record_set = 0;
-    client_mysql_ptr->result.affect_row = 0;
+    mysql_result.cur_mysql = 0;
+    mysql_result.record_set = 0;
+    mysql_result.affect_row = 0;
 
     client_mysql_ptr->real_mysql = mysql_init(0);
 
@@ -88,7 +81,9 @@ HCLIENTMYSQL create_client_mysql(const char *host, unsigned int port,
         charact_set = "latin1";
     }
 
-    if (!client_mysql_query(client_mysql_ptr, "SHOW CHARACTER SET", (unsigned long)strlen("SHOW CHARACTER SET")))
+    mysql_result = client_mysql_query(client_mysql_ptr, "SHOW CHARACTER SET", (unsigned long)strlen("SHOW CHARACTER SET"));
+
+    if (!mysql_result.cur_mysql)
     {
         if (err_info)
         {
@@ -102,13 +97,13 @@ HCLIENTMYSQL create_client_mysql(const char *host, unsigned int port,
         return 0;
     }
 
-    mysql_res_ptr = client_mysql_get_result(client_mysql_ptr);
+    //mysql_res_ptr = client_mysql_get_result(client_mysql_ptr);
 
-    character_set_num = mysql_num_rows(mysql_res_ptr->record_set);
+    character_set_num = mysql_num_rows(mysql_result.record_set);
 
     while (i < character_set_num)
     {
-        value_data = client_mysql_row_field_value(mysql_res_ptr, i, 0);
+        value_data = client_mysql_row_field_value(&mysql_result, i, 0);
 
         if (!strcmp(charact_set, value_data.value))
         {
@@ -118,7 +113,7 @@ HCLIENTMYSQL create_client_mysql(const char *host, unsigned int port,
         i++;
     }
 
-    client_mysql_free_result(mysql_res_ptr);
+    client_mysql_free_result(&mysql_result);
 
     if (!character_support)
     {
@@ -145,9 +140,11 @@ HCLIENTMYSQL create_client_mysql(const char *host, unsigned int port,
         return 0;
     }
 
-    if (!client_mysql_query(client_mysql_ptr,
+    mysql_result = client_mysql_query(client_mysql_ptr,
         "select @@character_set_client, @@character_set_connection, @@character_set_results;",
-        (unsigned long)strlen("select @@character_set_client, @@character_set_connection, @@character_set_results;")))
+        (unsigned long)strlen("select @@character_set_client, @@character_set_connection, @@character_set_results;"));
+
+    if (!mysql_result.cur_mysql)
     {
         if (err_info)
         {
@@ -161,27 +158,27 @@ HCLIENTMYSQL create_client_mysql(const char *host, unsigned int port,
         return 0;
     }
 
-    mysql_res_ptr = client_mysql_get_result(client_mysql_ptr);
+    //mysql_res_ptr = client_mysql_get_result(client_mysql_ptr);
 
-    value_data = client_mysql_row_field_value(mysql_res_ptr, 0, 0);
+    value_data = client_mysql_row_field_value(&mysql_result, 0, 0);
     character_client = value_data.value;
 
-    value_data = client_mysql_row_field_value(mysql_res_ptr, 0, 1);
+    value_data = client_mysql_row_field_value(&mysql_result, 0, 1);
     character_connection = value_data.value;
 
-    value_data = client_mysql_row_field_value(mysql_res_ptr, 0, 2);
+    value_data = client_mysql_row_field_value(&mysql_result, 0, 2);
     character_result = value_data.value;
 
     if (!strcmp(character_client, character_connection))
     {
         if (!strcmp(character_connection, character_result))
         {
-            client_mysql_free_result(mysql_res_ptr);
+            client_mysql_free_result(&mysql_result);
             return client_mysql_ptr;
         }
     }
 
-    client_mysql_free_result(mysql_res_ptr);
+    client_mysql_free_result(&mysql_result);
 
     if (err_info)
     {
@@ -196,10 +193,10 @@ HCLIENTMYSQL create_client_mysql(const char *host, unsigned int port,
 
 void destroy_client_mysql(HCLIENTMYSQL client_mysql_ptr)
 {
-    if (client_mysql_ptr->result.record_set)
-    {
-        mysql_free_result(client_mysql_ptr->result.record_set);
-    }
+    //if (client_mysql_ptr->result.record_set)
+    //{
+    //    mysql_free_result(client_mysql_ptr->result.record_set);
+    //}
 
     if (client_mysql_ptr->real_mysql)
     {
@@ -209,10 +206,16 @@ void destroy_client_mysql(HCLIENTMYSQL client_mysql_ptr)
     free(client_mysql_ptr);
 }
 
-bool client_mysql_query(HCLIENTMYSQL client_mysql_ptr, const char* sql, unsigned long length)
+CLIENTMYSQLRES client_mysql_query(HCLIENTMYSQL client_mysql_ptr, const char* sql, unsigned long length)
 {
+    CLIENTMYSQLRES result;
+
     int query_ret;
     int try_query_count = 0;
+
+    result.cur_mysql = 0;
+    result.record_set = 0;
+    result.affect_row = 0;
 
 QUERY:
 
@@ -240,47 +243,69 @@ QUERY:
             }
             else
             {
-                return false;
+                return result;
             }
         }
         break;
         default:
-            return false;
+            return result;
         }
     }
 
-    if (client_mysql_ptr->result.record_set)
+    result.cur_mysql = client_mysql_ptr->real_mysql;
+
+    result.record_set = mysql_store_result(result.cur_mysql);
+
+    if (result.record_set)
     {
-        mysql_free_result(client_mysql_ptr->result.record_set);
-    }
-
-    client_mysql_ptr->result.cur_mysql = client_mysql_ptr->real_mysql;
-
-    client_mysql_ptr->result.record_set = mysql_store_result(client_mysql_ptr->real_mysql);
-
-    if (client_mysql_ptr->result.record_set)
-    {
-        client_mysql_ptr->result.affect_row = 0;
+        result.affect_row = 0;
     }
     else
     {
-        if (mysql_field_count(client_mysql_ptr->real_mysql) == 0)
+        if (mysql_field_count(result.cur_mysql) == 0)
         {
-            client_mysql_ptr->result.affect_row = mysql_affected_rows(client_mysql_ptr->real_mysql);
+            result.affect_row = mysql_affected_rows(result.cur_mysql);
         }
         else
         {
-            return false;
+            result.cur_mysql = 0;
         }
     }
 
-    return true;
+    return result;
+
+    //if (client_mysql_ptr->result.record_set)
+    //{
+    //    mysql_free_result(client_mysql_ptr->result.record_set);
+    //}
+
+    //client_mysql_ptr->result.cur_mysql = client_mysql_ptr->real_mysql;
+
+    //client_mysql_ptr->result.record_set = mysql_store_result(client_mysql_ptr->real_mysql);
+
+    //if (client_mysql_ptr->result.record_set)
+    //{
+    //    client_mysql_ptr->result.affect_row = 0;
+    //}
+    //else
+    //{
+    //    if (mysql_field_count(client_mysql_ptr->real_mysql) == 0)
+    //    {
+    //        client_mysql_ptr->result.affect_row = mysql_affected_rows(client_mysql_ptr->real_mysql);
+    //    }
+    //    else
+    //    {
+    //        return false;
+    //    }
+    //}
+
+    //return true;
 }
 
-HCLIENTMYSQLRES client_mysql_get_result(HCLIENTMYSQL connection)
-{
-    return &connection->result;
-}
+//HCLIENTMYSQLRES client_mysql_get_result(HCLIENTMYSQL connection)
+//{
+//    return &connection->result;
+//}
 
 HCLIENTMYSQLRES client_mysql_next_result(HCLIENTMYSQLRES last_result, unsigned int* client_mysql_errno)
 {
