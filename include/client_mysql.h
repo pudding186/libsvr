@@ -31,8 +31,6 @@ extern "C" {
 
     typedef struct st_client_mysql*         HCLIENTMYSQL;
 
-    //typedef struct st_client_mysql_result*  HCLIENTMYSQLRES;
-
     typedef struct st_client_mysql_result
     {
         unsigned int    error_code;
