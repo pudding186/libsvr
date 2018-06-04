@@ -30,7 +30,7 @@ namespace SMemory
 
         bool IsValidPtr(void* ptr);
 
-        inline const char* Name() { return name; }
+        //////////////////////////////////////////////////////////////////////////
 
         inline static void* Alloc(size_t mem_size)
         {
@@ -52,9 +52,7 @@ namespace SMemory
         }
 
     protected:
-        const char*         name;
         HMEMORYUNIT         unit;
-    public:
         __declspec(thread) static HMEMORYMANAGER def_mem_mgr;
     };
 
@@ -75,13 +73,11 @@ namespace SMemory
 
         CClassMemory<T, false>(void)
         {
-            name = typeid(T).name();
             unit = create_memory_unit(sizeof(HMEMORYMANAGER*) + sizeof(IClassMemory**) + sizeof(T));
         }
 
         ~CClassMemory<T, false>(void)
         {
-            name = 0;
             destroy_memory_unit(unit);
         }
 
@@ -160,13 +156,11 @@ namespace SMemory
 
         CClassMemory<T, true>(void)
         {
-            name = typeid(T).name();
             unit = create_memory_unit(sizeof(HMEMORYMANAGER*) + sizeof(IClassMemory**) + sizeof(T));
         }
 
         ~CClassMemory<T, true>(void)
         {
-            name = 0;
             destroy_memory_unit(unit);
         }
 
