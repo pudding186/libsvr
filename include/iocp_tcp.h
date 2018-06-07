@@ -23,35 +23,35 @@ extern "C" {
     typedef struct st_iocp_tcp_listener*    HLISTENER;
     typedef struct st_iocp_tcp_manager*     HNETMANAGER;
 
-    typedef int(*pfn_parse_packet)(HSESSION session, const char* data, const int len);
+    typedef unsigned int (*pfn_parse_packet)(HSESSION session, const char* data, const unsigned int len);
 
     typedef void(*pfn_on_establish)(HLISTENER net_handle, HSESSION session);
     typedef void(*pfn_on_terminate)(HSESSION session);
     typedef void(*pfn_on_error)(HSESSION session, int module_error, int system_error);
-    typedef void(*pfn_on_recv)(HSESSION session, const char* data, const int len);
+    typedef void(*pfn_on_recv)(HSESSION session, const char* data, const unsigned int len);
 
     extern HNETMANAGER(create_iocp_tcp)(pfn_on_establish func_on_establish,
         pfn_on_terminate func_on_terminate,
         pfn_on_error func_on_error,
         pfn_on_recv func_onrecv,
-        int max_socket_num,
-        int max_io_thread_num,
-        int max_accept_ex_num);
+        unsigned int max_socket_num,
+        unsigned int max_io_thread_num,
+        unsigned int max_accept_ex_num);
 
     extern void (destroy_iocp_tcp)(HNETMANAGER mgr);
 
     extern HSESSION(iocp_tcp_connect)(HNETMANAGER mgr,
         const char* ip, unsigned short port,
-        int recv_buf_size, int send_buf_size,
+        unsigned int recv_buf_size, unsigned int send_buf_size,
         pfn_parse_packet func, bool reuse_addr,
         const char* bind_ip, unsigned short bind_port);
 
     extern HLISTENER(iocp_tcp_listen)(HNETMANAGER mgr,
         const char* ip, unsigned short port,
-        int recv_buf_size, int send_buf_size,
+        unsigned int recv_buf_size, unsigned int send_buf_size,
         pfn_parse_packet func, bool reuse_addr);
 
-    extern bool (iocp_tcp_send)(HSESSION socket, const void* data, int len);
+    extern bool (iocp_tcp_send)(HSESSION socket, const void* data, unsigned int len);
 
     extern void (iocp_tcp_close_session)(HSESSION socket);
 
@@ -79,9 +79,9 @@ extern "C" {
 
     extern unsigned short (iocp_tcp_get_local_port)(HSESSION socket);
 
-    extern int (iocp_tcp_get_send_free_size)(HSESSION socket);
+    extern unsigned int (iocp_tcp_get_send_free_size)(HSESSION socket);
 
-    extern void (iocp_tcp_set_send_control)(HSESSION socket, int pkg_size, int delay_time);
+    extern void (iocp_tcp_set_send_control)(HSESSION socket, unsigned int pkg_size, unsigned int delay_time);
 
 #ifdef  __cplusplus
 }

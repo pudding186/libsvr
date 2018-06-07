@@ -49,7 +49,7 @@ typedef struct st_event_establish
 
 typedef struct st_evt_data
 {
-    int data_len;
+    unsigned int data_len;
 }evt_data;
 
 typedef struct st_event_system_error
@@ -112,9 +112,9 @@ typedef struct st_iocp_listen_data
 typedef struct st_iocp_tcp_listener
 {
     SOCKET                      socket;
-    int                         send_buf_size;
-    int                         recv_buf_size;
-    int                         max_accept_ex_num;
+    unsigned int                send_buf_size;
+    unsigned int                recv_buf_size;
+    unsigned int                max_accept_ex_num;
     pfn_parse_packet            pkg_parser;
     char*                       arry_addr_cache;
     struct st_iocp_listen_data* arry_iocp_data;
@@ -144,10 +144,10 @@ typedef struct st_iocp_tcp_socket
     unsigned int                data_need_send;
     unsigned int                data_has_send;
     //LONG                        data_to_send;
-    LONG                        data_has_recv;
+    unsigned int                data_has_recv;
 
     //LONG                        data_delay_send;
-    LONG                        data_delay_send_size;
+    unsigned int                data_delay_send_size;
 
     unsigned int                local_ip;
     unsigned short              local_port;
@@ -171,7 +171,7 @@ typedef struct st_iocp_tcp_manager
 
     HANDLE                      iocp_port;
 
-    int                         work_thread_num;
+    unsigned int                work_thread_num;
     HANDLE*                     work_threads;
 
     LPFN_CONNECTEX              func_connectex;
@@ -187,11 +187,11 @@ typedef struct st_iocp_tcp_manager
     HMEMORYUNIT                 socket_pool;
     HRBTREE                     memory_mgr;
 
-    int                         max_socket_num;
-    int                         max_accept_ex_num;
+    unsigned int                max_socket_num;
+    unsigned int                max_accept_ex_num;
 
     char*                       max_pkg_buf;
-    int                         max_pkg_buf_size;
+    unsigned int                max_pkg_buf_size;
 
     //////////////////////////////////////////////////////////////////////////
     unsigned long long          m_pop_connect_fail;
@@ -257,7 +257,7 @@ bool _iocp_tcp_socket_bind_iocp_port(HSESSION socket)
     return false;
 }
 
-void* _iocp_tcp_manager_alloc_memory(HNETMANAGER mgr, int buffer_size)
+void* _iocp_tcp_manager_alloc_memory(HNETMANAGER mgr, unsigned int buffer_size)
 {
     HMEMORYUNIT unit;
     HRBNODE memory_node = rb_tree_find_int(mgr->memory_mgr, buffer_size);
@@ -281,24 +281,23 @@ void* _iocp_tcp_manager_alloc_memory(HNETMANAGER mgr, int buffer_size)
     return memory_unit_alloc(unit, 4 * 1024);
 }
 
-void _iocp_tcp_manager_free_memory(HNETMANAGER mgr, void* mem, int buffer_size)
+void _iocp_tcp_manager_free_memory(HNETMANAGER mgr, void* mem, unsigned int buffer_size)
 {
     HRBNODE memory_node = rb_tree_find_int(mgr->memory_mgr, buffer_size);
 
-    HMEMORYUNIT check_unit = *(mem_unit**)((unsigned char*)mem - sizeof(void*));
+    HMEMORYUNIT check_unit = rb_node_value(memory_node);
 
-    if (rb_node_value(memory_node) != check_unit)
+    if (!memory_unit_check(check_unit, mem))
     {
         CRUSH_CODE;
-        return;
     }
 
-    memory_unit_free((HMEMORYUNIT)rb_node_value(memory_node), mem);
+    memory_unit_free(check_unit, mem);
 }
 
 extern HLOOPCACHE create_loop_cache_ex(size_t size, void* data);
 
-HSESSION _iocp_tcp_manager_alloc_socket(HNETMANAGER mgr, int recv_buf_size, int send_buf_size)
+HSESSION _iocp_tcp_manager_alloc_socket(HNETMANAGER mgr, unsigned int recv_buf_size, unsigned int send_buf_size)
 {
     HSESSION socket = 0;
 
@@ -339,18 +338,18 @@ HSESSION _iocp_tcp_manager_alloc_socket(HNETMANAGER mgr, int recv_buf_size, int 
         }
         else
         {
-            if ((int)loop_cache_size(socket->recv_loop_cache) != recv_buf_size)
+            if ((unsigned int)loop_cache_size(socket->recv_loop_cache) != recv_buf_size)
             {
                 SOCKET_LOCK;
-                _iocp_tcp_manager_free_memory(mgr, loop_cache_get_cache(socket->recv_loop_cache), (int)loop_cache_size(socket->recv_loop_cache));
+                _iocp_tcp_manager_free_memory(mgr, loop_cache_get_cache(socket->recv_loop_cache), (unsigned int)loop_cache_size(socket->recv_loop_cache));
                 loop_cache_reset(socket->recv_loop_cache, recv_buf_size, (char*)_iocp_tcp_manager_alloc_memory(mgr, recv_buf_size));
                 SOCKET_UNLOCK;
             }
 
-            if ((int)loop_cache_size(socket->send_loop_cache) != send_buf_size)
+            if ((unsigned int)loop_cache_size(socket->send_loop_cache) != send_buf_size)
             {
                 SOCKET_LOCK;
-                _iocp_tcp_manager_free_memory(mgr, loop_cache_get_cache(socket->send_loop_cache), (int)loop_cache_size(socket->send_loop_cache));
+                _iocp_tcp_manager_free_memory(mgr, loop_cache_get_cache(socket->send_loop_cache), (unsigned int)loop_cache_size(socket->send_loop_cache));
                 loop_cache_reset(socket->send_loop_cache, send_buf_size, (char*)_iocp_tcp_manager_alloc_memory(mgr, send_buf_size));
                 SOCKET_UNLOCK;
             }
@@ -430,7 +429,7 @@ void _log_evt(HNETMANAGER mgr, size_t evt_size)
 #define EVENT_LOCK EnterCriticalSection(&socket->mgr->evt_lock)
 #define EVENT_UNLOCK LeaveCriticalSection(&socket->mgr->evt_lock)
 
-void _push_data_event(HSESSION socket, int data_len)
+void _push_data_event(HSESSION socket, unsigned int data_len)
 {
     if (socket->state == SOCKET_STATE_ESTABLISH)
     {
@@ -958,7 +957,7 @@ ERROR_DEAL:
     socket->socket = INVALID_SOCKET;
 }
 
-void _mod_timer_close(HSESSION socket, int elapse)
+void _mod_timer_close(HSESSION socket, unsigned int elapse)
 {
     if (socket->timer_send)
     {
@@ -980,7 +979,7 @@ void _mod_timer_close(HSESSION socket, int elapse)
     }
 }
 
-void _mod_timer_send(HSESSION socket, int elapse)
+void _mod_timer_send(HSESSION socket, unsigned int elapse)
 {
     if (socket->timer_send)
     {
@@ -1154,7 +1153,7 @@ void _iocp_tcp_listener_on_accept(HLISTENER listener, BOOL ret, struct st_iocp_l
 
 void iocp_tcp_close_listener(HLISTENER listener)
 {
-    int i;
+    unsigned int i;
     listener->state = SOCKET_STATE_NONE;
 
     if (listener->socket != INVALID_SOCKET)
@@ -1187,9 +1186,9 @@ CHECK_POST_ACCEPT_BEGIN:
     }
 }
 
-bool _iocp_tcp_listener_listen(HLISTENER listener, int max_accept_ex_num, const char* ip, UINT16 port, bool bReUseAddr)
+bool _iocp_tcp_listener_listen(HLISTENER listener, unsigned int max_accept_ex_num, const char* ip, UINT16 port, bool bReUseAddr)
 {
-    int i;
+    unsigned int i;
     struct sockaddr_in addr = { 0 };
 
     listener->socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
@@ -1304,7 +1303,7 @@ bool _proc_net_event(HNETMANAGER mgr)
 
         char* data_ptr = 0;
         size_t data_len;
-        int parser_len = 0;
+        unsigned int parser_len = 0;
 
         HSESSION socket = evt->socket;
 
@@ -1314,7 +1313,7 @@ bool _proc_net_event(HNETMANAGER mgr)
 
         loop_cache_get_data(socket->recv_loop_cache, &data_ptr, &data_len);
 
-        if ((int)data_len < socket->data_has_recv)
+        if ((unsigned int)data_len < socket->data_has_recv)
         {
             if (socket->data_has_recv > mgr->max_pkg_buf_size)
             {
@@ -1341,7 +1340,7 @@ bool _proc_net_event(HNETMANAGER mgr)
 
         while (socket->data_has_recv)
         {
-            int pkg_len = 0;
+            unsigned int pkg_len = 0;
             if (socket->pkg_parser)
             {
                 pkg_len = socket->pkg_parser(socket, data_ptr, socket->data_has_recv);
@@ -1350,6 +1349,7 @@ bool _proc_net_event(HNETMANAGER mgr)
             {
                 pkg_len = socket->data_has_recv;
             }
+
 
             if (pkg_len > 0)
             {
@@ -1369,11 +1369,11 @@ bool _proc_net_event(HNETMANAGER mgr)
             {
                 break;
             }
-            else
-            {
-                _iocp_tcp_socket_close(socket, ERROR_PACKET);
-                break;
-            }
+            //else
+            //{
+            //    _iocp_tcp_socket_close(socket, ERROR_PACKET);
+            //    break;
+            //}
         }
 
         if (parser_len)
@@ -1510,9 +1510,9 @@ unsigned WINAPI _iocp_thread_func(LPVOID param)
 
 bool _start_iocp_thread(HNETMANAGER mgr)
 {
-    int i;
+    unsigned int i;
 
-    if (mgr->work_thread_num <= 0)
+    if (!mgr->work_thread_num)
     {
         SYSTEM_INFO sys_info;
         GetSystemInfo(&sys_info);
@@ -1549,7 +1549,7 @@ bool _start_iocp_thread(HNETMANAGER mgr)
 
 void _stop_iocp_thread(HNETMANAGER mgr)
 {
-    int i;
+    unsigned int i;
     ULONG_PTR ptr = 0;
     for (i = 0; i < mgr->work_thread_num; i++)
     {
@@ -1848,11 +1848,11 @@ extern HRBTREE create_rb_tree_ex(key_cmp cmp_func);
 
 HNETMANAGER create_iocp_tcp(pfn_on_establish func_on_establish, pfn_on_terminate func_on_terminate,
     pfn_on_error func_on_error, pfn_on_recv func_on_recv,
-    int max_socket_num, int max_io_thread_num, int max_accept_ex_num)
+    unsigned int max_socket_num, unsigned int max_io_thread_num, unsigned int max_accept_ex_num)
 {
     WORD version_requested;
     WSADATA wsa_data;
-    int i;
+    unsigned int i;
 
     HSESSION* arry_socket_ptr = 0;
 
@@ -1968,8 +1968,8 @@ ERROR_DEAL:
 }
 
 HSESSION iocp_tcp_connect(HNETMANAGER mgr,
-    const char* ip, unsigned short port, int recv_buf_size,
-    int send_buf_size, pfn_parse_packet func, bool reuse_addr,
+    const char* ip, unsigned short port, unsigned int recv_buf_size,
+    unsigned int send_buf_size, pfn_parse_packet func, bool reuse_addr,
     const char* bind_ip, unsigned short bind_port)
 {
     HSESSION socket = _iocp_tcp_manager_alloc_socket(mgr, recv_buf_size, send_buf_size);
@@ -2020,7 +2020,7 @@ HSESSION iocp_tcp_connect(HNETMANAGER mgr,
 }
 
 HLISTENER iocp_tcp_listen(HNETMANAGER mgr,
-    const char* ip, unsigned short port, int recv_buf_size, int send_buf_size,
+    const char* ip, unsigned short port, unsigned int recv_buf_size, unsigned int send_buf_size,
     pfn_parse_packet func, bool reuse_addr)
 {
     HLISTENER listener = (HLISTENER)malloc(sizeof(struct st_iocp_tcp_listener));
@@ -2043,9 +2043,9 @@ HLISTENER iocp_tcp_listen(HNETMANAGER mgr,
     return listener;
 }
 
-bool iocp_tcp_send(HSESSION socket, const void* data, int len)
+bool iocp_tcp_send(HSESSION socket, const void* data, unsigned int len)
 {
-    if (len <= 0)
+    if (!len)
     {
         return true;
     }
@@ -2061,9 +2061,9 @@ bool iocp_tcp_send(HSESSION socket, const void* data, int len)
         return false;
     }
 
-    socket->data_need_send += (unsigned int)len;
+    socket->data_need_send += len;
 
-    if ((socket->data_need_send - socket->data_has_send) < (unsigned int)socket->data_delay_send_size)
+    if ((socket->data_need_send - socket->data_has_send) < socket->data_delay_send_size)
     {
         return true;
     }
@@ -2160,12 +2160,12 @@ unsigned short iocp_tcp_get_local_port(HSESSION socket)
     return socket->local_port;
 }
 
-int iocp_tcp_get_send_free_size(HSESSION socket)
+unsigned int iocp_tcp_get_send_free_size(HSESSION socket)
 {
-    return (int)loop_cache_free_size(socket->send_loop_cache);
+    return (unsigned int)loop_cache_free_size(socket->send_loop_cache);
 }
 
-void iocp_tcp_set_send_control(HSESSION socket, int pkg_size, int delay_time)
+void iocp_tcp_set_send_control(HSESSION socket, unsigned int pkg_size, unsigned int delay_time)
 {
     socket->data_delay_send_size = pkg_size;
     _mod_timer_send(socket, delay_time);
