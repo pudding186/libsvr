@@ -143,10 +143,8 @@ typedef struct st_iocp_tcp_socket
 
     unsigned int                data_need_send;
     unsigned int                data_has_send;
-    //LONG                        data_to_send;
     unsigned int                data_has_recv;
 
-    //LONG                        data_delay_send;
     unsigned int                data_delay_send_size;
 
     unsigned int                local_ip;
@@ -225,13 +223,11 @@ void _iocp_tcp_socket_reset(struct st_iocp_tcp_socket* socket)
     socket->send_req = 0;
     socket->send_ack = 0;
 
-    //socket->data_to_send = 0;
     socket->data_need_send = 0;
     socket->data_has_send = 0;
 
     socket->data_has_recv = 0;
 
-    //socket->data_delay_send = 0;
     socket->data_delay_send_size = 0;
 
     socket->local_ip = 0;
@@ -1048,8 +1044,6 @@ bool _iocp_tcp_listener_post_accept_ex(HLISTENER listener, struct st_iocp_listen
         }
     }
 
-    //::InterlockedIncrement(&m_post_acceptex);
-
     return true;
 
 ERROR_DEAL:
@@ -1248,10 +1242,7 @@ bool _iocp_tcp_listener_listen(HLISTENER listener, unsigned int max_accept_ex_nu
         goto ERROR_DEAL;
     }
 
-    //m_post_acceptex = 0;
-
     listener->state = SOCKET_STATE_LISTEN;
-    //SetState(SOCKET_STATE_LISTEN);
 
     for (i = 0; i < listener->max_accept_ex_num; i++)
     {
@@ -1369,11 +1360,6 @@ bool _proc_net_event(HNETMANAGER mgr)
             {
                 break;
             }
-            //else
-            //{
-            //    _iocp_tcp_socket_close(socket, ERROR_PACKET);
-            //    break;
-            //}
         }
 
         if (parser_len)
@@ -1426,12 +1412,6 @@ bool _proc_net_event(HNETMANAGER mgr)
         _mod_timer_close(evt->socket, DELAY_CLOSE_SOCKET);
     }
     break;
-    //case NET_EVENT_SEND_CONTROL:
-    //    {
-    //        CIocpTcpSocket* socket = (CIocpTcpSocket*)evt->socket;
-    //        ModTimer(socket, evt->evt_send_control.send_delay_time, -1);
-    //    }
-    //    break;
     case NET_EVENT_RECV_ACTIVE:
     {
         ++mgr->m_pop_recv_active;
@@ -1655,87 +1635,6 @@ void _iocp_tcp_on_timer(HTIMERINFO timer)
         CRUSH_CODE;
     }
 }
-
-//void _iocp_tcp_on_timer(HTIMERINFO timer)
-//{
-//    HSESSION socket = (HSESSION)timer_get_data(timer);
-//
-//    if (!socket)
-//    {
-//        CRUSH_CODE;
-//    }
-//
-//    if (socket->timer_check != timer)
-//    {
-//        CRUSH_CODE;
-//    }
-//
-//
-//    switch (socket->state)
-//    {
-//    case SOCKET_STATE_ESTABLISH:
-//    {
-//        if (socket->data_need_send != socket->data_has_send)
-//        {
-//            if (socket->send_req == socket->send_ack)
-//            {
-//                if (!_iocp_tcp_socket_post_send_req(socket))
-//                {
-//                    _iocp_tcp_socket_close(socket, ERROR_SYSTEM);
-//                }
-//            }
-//        }
-//    }
-//    break;
-//    case SOCKET_STATE_TERMINATE:
-//    {
-//        if (socket->data_need_send != socket->data_has_send)
-//        {
-//            if (socket->send_req == socket->send_ack)
-//            {
-//                if (!_iocp_tcp_socket_post_send_req(socket))
-//                {
-//                    _iocp_tcp_socket_close(socket, ERROR_SYSTEM);
-//                }
-//            }
-//
-//            return;
-//        }
-//
-//        shutdown(socket->socket, SD_RECEIVE);
-//
-//        socket->state = SOCKET_STATE_DELETE;
-//
-//        _mod_timer_check(socket, DELAY_CLOSE_SOCKET);
-//    }
-//    break;
-//    case SOCKET_STATE_CONNECT_FAIL:
-//    {
-//        socket->state = SOCKET_STATE_DELETE;
-//    }
-//    break;
-//    case SOCKET_STATE_DELETE:
-//    {
-//        if (socket->socket != INVALID_SOCKET)
-//        {
-//            closesocket(socket->socket);
-//            socket->socket = INVALID_SOCKET;
-//        }
-//
-//        if ((socket->recv_req == socket->recv_ack) && (socket->send_req == socket->send_ack))
-//        {
-//            timer_del(socket->timer_check);
-//            socket->timer_check = 0;
-//            _iocp_tcp_manager_free_socket(socket->mgr, socket);
-//        }
-//    }
-//    break;
-//    default:
-//    {
-//        CRUSH_CODE;
-//    }
-//    }
-//}
 
 bool _set_wsa_function(HNETMANAGER mgr)
 {
