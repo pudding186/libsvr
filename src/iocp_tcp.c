@@ -1356,7 +1356,7 @@ bool _proc_net_event(HNETMANAGER mgr)
                 socket->data_has_recv -= pkg_len;
                 parser_len += pkg_len;
             }
-            else if (pkg_len == 0)
+            else
             {
                 break;
             }
