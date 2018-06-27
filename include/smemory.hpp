@@ -3,9 +3,12 @@
 #include <limits>
 #include <iostream>
 
-#ifdef TRACE_ALLOC
+#ifdef _DEBUG
 #define S_NEW(type, size) SMemory::TraceNew<type>(size, __FILE__, __LINE__)
 #define S_DELETE(ptr) SMemory::TraceDelete(ptr)
+#define S_MALLOC(size) SMemory::IClassMemory::TraceAlloc(size, __FILE__, __LINE__)
+#define S_REALLOC(mem, size) SMemory::IClassMemory::TraceRealloc(mem, size, __FILE__, __LINE__)
+#define S_FREE(mem) SMemory::IClassMemory::TraceFree(mem)
 #else
 #define S_NEW(type, size) SMemory::New<type>(size)
 #define S_DELETE(ptr) SMemory::Delete(ptr)
@@ -19,6 +22,17 @@
 
 namespace SMemory
 {
+    typedef struct st_mem_trace_info
+    {
+        const char* name;
+        const char* file;
+        size_t      line;
+        size_t      size;
+    }MemTraceInfo;
+
+    extern void trace_alloc(const char* name, const char* file, int line, void* ptr, size_t size);
+    extern void trace_free(void* ptr);
+
     class IClassMemory
     {
     public:
@@ -49,6 +63,31 @@ namespace SMemory
         inline static bool IsValidMem(void* mem)
         {
             return memory_manager_check(def_mem_mgr, mem);
+        }
+
+        inline static void* TraceAlloc(size_t mem_size, const char* file, int line)
+        {
+            void* mem = memory_manager_alloc(def_mem_mgr, mem_size);
+            trace_alloc("alloc", file, line, mem, mem_size);
+
+            return mem;
+        }
+
+        inline static void* TraceRealloc(void* old_mem, size_t new_size, const char* file, int line)
+        {
+            if (old_mem)
+            {
+                trace_free(old_mem);
+            }
+            void* new_mem = memory_manager_realloc(def_mem_mgr, old_mem, new_size);
+            trace_alloc("realloc", file, line, new_mem, new_size);
+            return new_mem;
+        }
+
+        inline static void TraceFree(void* mem)
+        {
+            trace_free(mem);
+            memory_manager_free(def_mem_mgr, mem);
         }
 
     protected:
@@ -229,13 +268,13 @@ namespace SMemory
 
     extern void Delete(void* ptr);
 
-    extern void trace_alloc(const char* name, const char* file, int line, void* ptr, size_t size);
-
     template <typename T>
     T* TraceNew(size_t size, const char* file, int line)
     {
-        T* ptr = get_class_memory<T>().New(size);
-        trace_alloc(get_class_memory<T>().Name(), file, line, ptr, size);
+        T* obj = get_class_memory<T>().New(size);
+        trace_alloc(typeid(T).name(), file, line, obj, size);
+
+        return obj;
     }
 
     extern void TraceDelete(void* ptr);

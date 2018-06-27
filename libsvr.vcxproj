@@ -177,6 +177,10 @@
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">CompileAsC</CompileAs>
       <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Level4</WarningLevel>
     </ClCompile>
+    <ClCompile Include="src\memory_trace.cpp">
+      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">CompileAsCpp</CompileAs>
+      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">CompileAsCpp</CompileAs>
+    </ClCompile>
     <ClCompile Include="src\rb_tree.c">
       <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Level4</WarningLevel>
     </ClCompile>
@@ -197,7 +201,6 @@
     <ClCompile Include="src\utility.cpp">
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Default</CompileAs>
     </ClCompile>
-    <ClCompile Include="src\web_socket.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\avl_tree.h" />
@@ -209,6 +212,7 @@
     <ClInclude Include="include\json.h" />
     <ClInclude Include="include\loop_cache.h" />
     <ClInclude Include="include\memory_pool.h" />
+    <ClInclude Include="include\memory_trace.hpp" />
     <ClInclude Include="include\rb_tree.h" />
     <ClInclude Include="include\share_memory.h" />
     <ClInclude Include="include\smemory.hpp" />
@@ -217,7 +221,6 @@
     <ClInclude Include="include\timer.h" />
     <ClInclude Include="include\type_def.h" />
     <ClInclude Include="include\utility.hpp" />
-    <ClInclude Include="include\web_socket.h" />
     <ClInclude Include="src\data_def.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
