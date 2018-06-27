@@ -272,7 +272,7 @@ namespace SMemory
     T* TraceNew(size_t size, const char* file, int line)
     {
         T* obj = get_class_memory<T>().New(size);
-        trace_alloc(typeid(T).name(), file, line, obj, size);
+        trace_alloc(typeid(T).name(), file, line, obj, size*sizeof(T));
 
         return obj;
     }
