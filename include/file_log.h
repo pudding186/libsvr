@@ -15,6 +15,7 @@ extern "C" {
     };
 
     typedef struct st_log_file* HFILELOG;
+    typedef struct st_log_file_ex* HFILELOGEX;
 
     extern HFILELOG(create_file_log)(const char* path, const char* name);
     extern void (destroy_file_log)(HFILELOG log);
@@ -22,6 +23,14 @@ extern "C" {
     extern void (file_log_option)(HFILELOG log, enum log_level lv, bool open_or_not);
     extern bool (file_log_open_or_not)(HFILELOG log, enum log_level lv);
     extern bool (file_log_flush)(HFILELOG log);
+
+    extern HFILELOGEX(create_file_log_ex)(HFILELOG log, const char* path, const char* name);
+    extern void (destroy_file_log_ex)(HFILELOGEX log_ex);
+    extern bool (file_log_ex_write)(HFILELOGEX log_ex, enum log_level lv, const char* format, ...);
+    extern void (file_log_ex_option)(HFILELOGEX log_ex, enum log_level lv, bool open_or_not);
+    extern bool (file_log_ex_open_or_not)(HFILELOGEX log_ex, enum log_level lv);
+    extern bool (file_log_ex_flush)(HFILELOGEX log_ex);
+
 
 
 #ifdef  __cplusplus

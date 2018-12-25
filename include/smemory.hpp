@@ -4,13 +4,13 @@
 #include <iostream>
 
 #ifdef _DEBUG
-#define S_NEW(type, size) SMemory::TraceNew<type>(size, __FILE__, __LINE__)
+#define S_NEW(type, size, ...) SMemory::TraceNew<type>(size, __FILE__, __LINE__, __VA_ARGS__)
 #define S_DELETE(ptr) SMemory::TraceDelete(ptr)
 #define S_MALLOC(size) SMemory::IClassMemory::TraceAlloc(size, __FILE__, __LINE__)
 #define S_REALLOC(mem, size) SMemory::IClassMemory::TraceRealloc(mem, size, __FILE__, __LINE__)
 #define S_FREE(mem) SMemory::IClassMemory::TraceFree(mem)
 #else
-#define S_NEW(type, size) SMemory::New<type>(size)
+#define S_NEW(type, size, ...) SMemory::New<type>(size, __VA_ARGS__)
 #define S_DELETE(ptr) SMemory::Delete(ptr)
 #define S_MALLOC(size) SMemory::IClassMemory::Alloc(size)
 #define S_REALLOC(mem, size) SMemory::IClassMemory::Realloc(mem, size)
@@ -120,7 +120,8 @@ namespace SMemory
             destroy_memory_unit(unit);
         }
 
-        T* New(size_t size)
+        template <typename... Args>
+        T* New(size_t size, Args&&... args)
         {
             if (size == 1)
             {
@@ -128,7 +129,7 @@ namespace SMemory
                 *(HMEMORYMANAGER*)ptr = def_mem_mgr;
                 *(IClassMemory**)((unsigned char*)ptr + sizeof(HMEMORYMANAGER*)) = this;
 
-                return new((unsigned char*)ptr + sizeof(HMEMORYMANAGER*) + sizeof(IClassMemory**))T();
+                return new((unsigned char*)ptr + sizeof(HMEMORYMANAGER*) + sizeof(IClassMemory**))T(std::forward<Args>(args)...);
             }
             else if (size > 1)
             {
@@ -140,7 +141,7 @@ namespace SMemory
 
                 while (size)
                 {
-                    new(obj)T();
+                    new(obj)T(std::forward<Args>(args)...);
                     ++obj;
                     size--;
                 }
@@ -254,10 +255,10 @@ namespace SMemory
         return class_memory;
     }
 
-    template <typename T>
-    T* New(size_t size)
+    template <typename T, typename... Args>
+    T* New(size_t size, Args&&... args)
     {
-        return get_class_memory<T>().New(size);
+        return get_class_memory<T>().New(size, std::forward<Args>(args)...);
     }
 
     template <typename T>
@@ -268,10 +269,10 @@ namespace SMemory
 
     extern void Delete(void* ptr);
 
-    template <typename T>
-    T* TraceNew(size_t size, const char* file, int line)
+    template <typename T, typename... Args>
+    T* TraceNew(size_t size, const char* file, int line, Args&&... args)
     {
-        T* obj = get_class_memory<T>().New(size);
+        T* obj = get_class_memory<T>().New(size, std::forward<Args>(args)...);
         trace_alloc(typeid(T).name(), file, line, obj, size*sizeof(T));
 
         return obj;

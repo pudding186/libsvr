@@ -1,5 +1,4 @@
 #pragma once
-#include <string>
 
 //////////////////////////////////////////////////////////////////////////
 
@@ -9,23 +8,33 @@ extern long long rand_int64(long long min, long long max);
 extern unsigned int BKDRHash(const char* str);
 extern unsigned long long BKDRHash64(const char* str);
 
-typedef struct st_str_fragment
-{
-    char*       frag_str;
-    int         frag_str_len;
-}str_fragment;
+//typedef struct st_str_fragment
+//{
+//    char*       frag_str;
+//    int         frag_str_len;
+//}str_fragment;
+//
+//typedef struct st_str_fragment_array
+//{
+//    char*           copy_string;
+//    str_fragment*   fragments;
+//    int             fragments_count;
+//}str_fragment_array;
+//
+//extern const char* (split_str_fill_fragment)(const char* str, unsigned int str_len, const char* spliter, unsigned int spliter_len, str_fragment* fragments, size_t max_fragment);
+//extern str_fragment_array* (split_str_to_fragment)(const char* str, unsigned int str_len, const char* spliter, unsigned int spliter_len);
+//extern void (free_str_fragment_array)(str_fragment_array* array);
 
-typedef struct st_str_fragment_array
-{
-    char*           copy_string;
-    str_fragment*   fragments;
-    int             fragments_count;
-}str_fragment_array;
-
-extern str_fragment_array* (split_str_to_fragment)(const char* str, int str_len, const char* spliter, int spliter_len);
-extern void (free_str_fragment_array)(str_fragment_array* array);
+//typedef struct st_mem_segment
+//{
+//    const void* segment;
+//    size_t      segment_length;
+//}mem_segment;
+//
+//size_t (split_mem_fill_segment)(const void* mem, size_t mem_size, const void* spliter, size_t spliter_len, mem_segment* segments, size_t max_segments);
 
 #ifdef __cplusplus
+#include <string>
 
 template <size_t N>
 inline void StrSafeCopy(char(&Destination)[N], const char* Source) throw() {
@@ -144,6 +153,8 @@ extern int (GetFuncStackTop)(HFUNCPERFMGR mgr);
 extern CFuncPerformanceInfo* (GetStackFuncPerfInfo)(HFUNCPERFMGR mgr, int idx);
 
 extern HFUNCPERFMGR(DefFuncPerfMgr)(void);
+
+extern size_t (FuncStackToCache)(HFUNCPERFMGR mgr, char* cache, size_t cache_size);
 
 extern void (FuncStackToFile)(HFUNCPERFMGR mgr, const char* file_path);
 

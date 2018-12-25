@@ -284,73 +284,7 @@ unsigned long long BKDRHash64(const char* str)
 //    }
 //}
 
-str_fragment_array* split_str_to_fragment(const char* str, int str_len, const char* spliter, int spliter_len)
-{
-    int alloc_str_fragment_count = 256;
 
-    char* ptr = (char*)libsvr_memory_manager_alloc(sizeof(str_fragment_array) + str_len + 1);
-    str_fragment_array* frag_array = (str_fragment_array*)ptr;
-    frag_array->copy_string = (char*)(ptr + sizeof(str_fragment_array));
-    memcpy(frag_array->copy_string, str, str_len);
-    frag_array->copy_string[str_len] = 0;
-
-    frag_array->fragments_count = 0;
-    frag_array->fragments = (str_fragment*)libsvr_memory_manager_alloc(
-        sizeof(str_fragment)*alloc_str_fragment_count);
-
-    char* pStart = frag_array->copy_string;
-    char* pPos;
-    char* end = frag_array->copy_string + str_len;
-
-    pPos = strstr(pStart, spliter);
-
-    while (pPos)
-    {
-        if (pPos > pStart)
-        {
-            frag_array->fragments[frag_array->fragments_count].frag_str = pStart;
-            frag_array->fragments[frag_array->fragments_count].frag_str_len = (int)(pPos - pStart);
-            frag_array->fragments_count++;
-        }
-        else if (pPos == pStart)
-        {
-            frag_array->fragments[frag_array->fragments_count].frag_str = 0;
-            frag_array->fragments[frag_array->fragments_count].frag_str_len = 0;
-            frag_array->fragments_count++;
-        }
-
-        if (frag_array->fragments_count >= alloc_str_fragment_count)
-        {
-            alloc_str_fragment_count += 256;
-            frag_array->fragments = (str_fragment*)libsvr_memory_manager_realloc(
-                frag_array->fragments, sizeof(str_fragment)*alloc_str_fragment_count);
-        }
-
-        *pPos = 0;
-        pStart = pPos + spliter_len;
-        pPos = strstr(pStart, spliter);
-    }
-
-    if (pStart < end)
-    {
-        frag_array->fragments[frag_array->fragments_count].frag_str = pStart;
-        frag_array->fragments[frag_array->fragments_count].frag_str_len = (int)(end - pStart);
-        frag_array->fragments_count++;
-    }
-
-    return frag_array;
-}
-
-void free_str_fragment_array(str_fragment_array* array)
-{
-    if (array->fragments)
-    {
-        libsvr_memory_manager_free(array->fragments);
-        array->fragments = 0;
-    }
-
-    libsvr_memory_manager_free(array);
-}
 
 
 //////////////////////////////////////////////////////////////////////////
@@ -586,6 +520,50 @@ void FuncStackToFile(HFUNCPERFMGR mgr, const char* path)
             fclose(stack_file);
         }
     }
+}
+
+size_t FuncStackToCache(HFUNCPERFMGR mgr, char* cache, size_t cache_size)
+{
+    int total_len = 0;
+    int format_len = sprintf_s(cache, cache_size, "****** call stack ******\r\n");
+    int stack_idx = mgr->StackTop();
+
+    if (format_len < 0)
+    {
+        return 0;
+    }
+    else
+    {
+        total_len += format_len;
+    }
+
+    while (stack_idx > 0)
+    {
+        CFuncPerformanceInfo* info = mgr->StackFuncPerfInfo(stack_idx - 1);
+        if (info)
+        {
+            format_len = sprintf_s(cache + total_len, cache_size - total_len,
+                "[stack:%2d] call %s()\r\n", stack_idx, info->func_name);
+        }
+        else
+        {
+            format_len = sprintf_s(cache + total_len, cache_size - total_len,
+                "[stack:%2d] call ?()\r\n", stack_idx);
+        }
+
+        if (format_len < 0)
+        {
+            return 0;
+        }
+        else
+        {
+            total_len += format_len;
+        }
+
+        --stack_idx;
+    }
+
+    return total_len;
 }
 
 __declspec(thread) CFuncPerformanceMgr* def_func_perf_mgr = 0;

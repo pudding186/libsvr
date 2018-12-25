@@ -1178,6 +1178,8 @@ CHECK_POST_ACCEPT_BEGIN:
         free(listener->arry_iocp_data);
         listener->arry_iocp_data = 0;
     }
+
+    free(listener);
 }
 
 bool _iocp_tcp_listener_listen(HLISTENER listener, unsigned int max_accept_ex_num, const char* ip, UINT16 port, bool bReUseAddr)
@@ -1261,8 +1263,6 @@ bool _iocp_tcp_listener_listen(HLISTENER listener, unsigned int max_accept_ex_nu
     return true;
 
 ERROR_DEAL:
-
-    iocp_tcp_close_listener(listener);
 
     return false;
 }
@@ -1933,8 +1933,6 @@ HLISTENER iocp_tcp_listen(HNETMANAGER mgr,
     if (!_iocp_tcp_listener_listen(listener, mgr->max_accept_ex_num, ip, port, reuse_addr))
     {
         iocp_tcp_close_listener(listener);
-
-        free(listener);
 
         return 0;
     }

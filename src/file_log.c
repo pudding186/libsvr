@@ -22,16 +22,6 @@
 #include <sys/types.h>
 #endif
 
-
-typedef struct st_log_cmd
-{
-    int     cmd;
-    enum    log_level lv;
-    char    data_org[512];
-    char*   data_ext;
-    int     data_len;
-}log_cmd;
-
 typedef struct st_log_unit
 {
     struct st_log_unit* next;
@@ -53,6 +43,27 @@ typedef struct st_log_file
     log_unit*   log_unit_head;
     int         m_is_run;
 }log_file;
+
+typedef struct st_log_file_ex
+{
+    char        log_dir[PATH_MAX];
+    char        log_name[PATH_MAX];
+    struct tm   log_time;
+    FILE*       log_file;
+    size_t      log_size;
+    int         log_flag;
+    log_file*   log_mgr;
+}log_file_ex;
+
+typedef struct st_log_cmd
+{
+    int			    cmd;
+    enum		    log_level lv;
+    char		    data_org[512];
+    char*		    data_ext;
+    int             data_len;
+    log_file_ex*	ext_log;
+}log_cmd;
 
 extern HLOOPCACHE create_loop_cache_ex(size_t size, char* data);
 extern void destroy_loop_cache_ex(HLOOPCACHE cache);
@@ -141,6 +152,59 @@ bool _mk_dir(const char* dir)
     } while (p1 != NULL);
 
     return true;
+}
+
+void _check_log_ex(log_file_ex* log_ex)
+{
+    int index = 0;
+    char file_full_path[PATH_MAX];
+    struct tm st_cur_time;
+    time_t cur_time = get_time();
+    st_cur_time = *localtime(&cur_time);
+
+    if (!log_ex->log_file)
+    {
+        snprintf(file_full_path, sizeof(file_full_path), "%s/%s_%04d-%02d-%02d.txt",
+            log_ex->log_dir, log_ex->log_name, st_cur_time.tm_year + 1900, st_cur_time.tm_mon + 1,
+            st_cur_time.tm_mday);
+
+        log_ex->log_file = fopen(file_full_path, "a");
+        log_ex->log_size = ftell(log_ex->log_file);
+    }
+
+    if (log_ex->log_file)
+    {
+        while (log_ex->log_size >= MAX_LOGFILE_SIZE)
+        {
+            ++index;
+            snprintf(file_full_path, sizeof(file_full_path), "%s/%s_%04d-%02d-%02d-%d.txt",
+                log_ex->log_dir, log_ex->log_name, st_cur_time.tm_year + 1900, st_cur_time.tm_mon + 1,
+                st_cur_time.tm_mday, index);
+
+            fclose(log_ex->log_file);
+            log_ex->log_file = fopen(file_full_path, "a");
+            log_ex->log_size = ftell(log_ex->log_file);
+        }
+    }
+
+    if (log_ex->log_time.tm_year != st_cur_time.tm_year
+        || log_ex->log_time.tm_mon != st_cur_time.tm_mon
+        || log_ex->log_time.tm_mday != st_cur_time.tm_mday)
+    {
+        snprintf(file_full_path, sizeof(file_full_path), "%s/%s_%04d-%02d-%02d.txt",
+            log_ex->log_dir, log_ex->log_name, st_cur_time.tm_year + 1900, st_cur_time.tm_mon + 1,
+            st_cur_time.tm_mday);
+
+        if (log_ex->log_file)
+        {
+            fclose(log_ex->log_file);
+        }
+
+        log_ex->log_file = fopen(file_full_path, "a");
+        log_ex->log_size = ftell(log_ex->log_file);
+    }
+
+    log_ex->log_time = st_cur_time;
 }
 
 void _check_log(log_file* log)
@@ -303,33 +367,68 @@ void _process_log_unit(log_file* log)
                 int write_size;
                 char* data;
 
-                _check_log(log);
-
-                data = cmd->data_org;
-                if (cmd->data_ext)
+                if (cmd->ext_log)
                 {
-                    data = cmd->data_ext;
+                    log_file_ex* log_ex = cmd->ext_log;
+
+                    _check_log_ex(log_ex);
+
+                    data = cmd->data_org;
+                    if (cmd->data_ext)
+                    {
+                        data = cmd->data_ext;
+                    }
+
+                    write_size = fprintf(log_ex->log_file, "%04d-%02d-%02d %02d:%02d:%02d %s %s\r\n",
+                        log_ex->log_time.tm_year + 1900, log_ex->log_time.tm_mon + 1, log_ex->log_time.tm_mday,
+                        log_ex->log_time.tm_hour, log_ex->log_time.tm_min, log_ex->log_time.tm_sec,
+                        log_lv_to_str(cmd->lv), data);
+
+                    _begin_console(cmd->lv);
+                    printf("%04d-%02d-%02d %02d:%02d:%02d %s %s\r\n", log_ex->log_time.tm_year + 1900, log_ex->log_time.tm_mon + 1, log_ex->log_time.tm_mday,
+                        log_ex->log_time.tm_hour, log_ex->log_time.tm_min, log_ex->log_time.tm_sec,
+                        log_lv_to_str(cmd->lv), data);
+                    _end_console();
+
+                    if (write_size > 0)
+                    {
+                        log_ex->log_size += write_size;
+                    }
+
                 }
-
-                write_size = fprintf(log->log_file, "%04d-%02d-%02d %02d:%02d:%02d %s %s\r\n",
-                    log->log_time.tm_year + 1900, log->log_time.tm_mon + 1, log->log_time.tm_mday,
-                    log->log_time.tm_hour, log->log_time.tm_min, log->log_time.tm_sec,
-                    log_lv_to_str(cmd->lv), data);
-
-                _begin_console(cmd->lv);
-                printf("%04d-%02d-%02d %02d:%02d:%02d %s %s\r\n", log->log_time.tm_year + 1900, log->log_time.tm_mon + 1, log->log_time.tm_mday,
-                    log->log_time.tm_hour, log->log_time.tm_min, log->log_time.tm_sec,
-                    log_lv_to_str(cmd->lv), data);
-                _end_console();
-
-                if (write_size > 0)
+                else
                 {
-                    log->log_size += write_size;
+                    _check_log(log);
+
+                    data = cmd->data_org;
+                    if (cmd->data_ext)
+                    {
+                        data = cmd->data_ext;
+                    }
+
+                    write_size = fprintf(log->log_file, "%04d-%02d-%02d %02d:%02d:%02d %s %s\r\n",
+                        log->log_time.tm_year + 1900, log->log_time.tm_mon + 1, log->log_time.tm_mday,
+                        log->log_time.tm_hour, log->log_time.tm_min, log->log_time.tm_sec,
+                        log_lv_to_str(cmd->lv), data);
+
+                    _begin_console(cmd->lv);
+                    printf("%04d-%02d-%02d %02d:%02d:%02d %s %s\r\n", log->log_time.tm_year + 1900, log->log_time.tm_mon + 1, log->log_time.tm_mday,
+                        log->log_time.tm_hour, log->log_time.tm_min, log->log_time.tm_sec,
+                        log_lv_to_str(cmd->lv), data);
+                    _end_console();
+
+                    if (write_size > 0)
+                    {
+                        log->log_size += write_size;
+                    }
                 }
             }
             else if (LOG_CMD_FLUSH == cmd->cmd)
             {
-                fflush(log->log_file);
+                if (cmd->ext_log)
+                    fflush(cmd->ext_log->log_file);
+                else
+                    fflush(log->log_file);
             }
 
             if (log->m_is_run)
@@ -346,7 +445,7 @@ void _process_log_unit(log_file* log)
     }
 }
 
-HFILELOG(create_file_log)(const char* path, const char* name)
+HFILELOG (create_file_log)(const char* path, const char* name)
 {
     unsigned thread_id = 0;
     log_file* log = (log_file*)malloc(sizeof(log_file));
@@ -496,6 +595,7 @@ bool (file_log_write)(HFILELOG log, enum log_level lv, const char* format, ...)
         cmd->data_ext = 0;
     }
 
+    cmd->ext_log = 0;
     cmd->data_len = 0;
 
     cmd->lv = lv;
@@ -569,6 +669,7 @@ bool (file_log_flush)(HFILELOG log)
         cmd->data_ext = 0;
     }
 
+    cmd->ext_log = 0;
     cmd->data_len = 0;
 
     cmd->cmd = LOG_CMD_FLUSH;
@@ -607,3 +708,190 @@ bool file_log_open_or_not(HFILELOG log, enum log_level lv)
 {
     return ((log->log_flag & lv) != 0);
 }
+
+HFILELOGEX create_file_log_ex(HFILELOG file_log, const char* path, const char* name)
+{
+    log_file_ex* log_ex = (log_file_ex*)malloc(sizeof(log_file_ex));
+
+    if (!path)
+    {
+        return 0;
+    }
+
+    if (!name)
+    {
+        name = "log";
+    }
+
+    if (!_mk_dir(path))
+    {
+        free(log_ex);
+        return 0;
+    }
+
+    strncpy(log_ex->log_dir, path, sizeof(log_ex->log_dir));
+    strncpy(log_ex->log_name, name, sizeof(log_ex->log_name));
+
+    log_ex->log_file = 0;
+    log_ex->log_size = 0;
+    log_ex->log_flag = log_none;
+    log_ex->log_mgr = file_log;
+
+    _check_log_ex(log_ex);
+
+    return log_ex;
+}
+
+void (destroy_file_log_ex)(HFILELOGEX log_ex)
+{
+    if (log_ex->log_file)
+    {
+        fflush(log_ex->log_file);
+        fclose(log_ex->log_file);
+    }
+
+    free(log_ex);
+}
+
+bool file_log_ex_write(HFILELOGEX log_ex, enum log_level lv, const char* format, ...)
+{
+    log_unit* unit = _get_log_unit(log_ex->log_mgr);
+
+    log_cmd* cmd = 0;
+    log_cmd* rcy_cmd = 0;
+
+    va_list args;
+
+    if (!(log_ex->log_flag & lv))
+    {
+        return false;
+    }
+
+    if (loop_cache_pop_data(unit->rcy_que, (char*)&cmd, sizeof(log_cmd*)))
+    {
+        if (cmd->data_ext)
+        {
+            memory_manager_free(unit->log_mem_pool_mgr, cmd->data_ext);
+            cmd->data_ext = 0;
+        }
+    }
+    else
+    {
+        cmd = memory_unit_alloc(unit->log_cmd_unit, 4096);
+        cmd->data_ext = 0;
+    }
+
+    cmd->ext_log = log_ex;
+    cmd->data_len = 0;
+
+    cmd->lv = lv;
+    cmd->cmd = LOG_CMD_WRITE;
+
+    va_start(args, format);
+    cmd->data_len = vsnprintf(cmd->data_org, sizeof(cmd->data_org), format, args);
+    va_end(args);
+
+    if (cmd->data_len < 0)
+    {
+        memory_unit_free(unit->log_cmd_unit, cmd);
+        return false;
+    }
+    else if (cmd->data_len >= sizeof(cmd->data_org))
+    {
+        va_list args_ex;
+
+        int new_data_len = cmd->data_len + 1;
+        cmd->data_ext = memory_manager_alloc(unit->log_mem_pool_mgr, new_data_len);
+
+
+        va_start(args_ex, format);
+        cmd->data_len = vsnprintf(cmd->data_ext, new_data_len, format, args_ex);
+        va_end(args_ex);
+
+        if (cmd->data_len != (new_data_len - 1))
+        {
+            memory_manager_free(unit->log_mem_pool_mgr, cmd->data_ext);
+            memory_unit_free(unit->log_cmd_unit, cmd);
+            return false;
+        }
+    }
+
+    while (!loop_cache_push_data(unit->cmd_que, &cmd, sizeof(log_cmd*)))
+    {
+        if (loop_cache_pop_data(unit->rcy_que, &rcy_cmd, sizeof(log_cmd*)))
+        {
+            if (rcy_cmd->data_ext)
+            {
+                memory_manager_free(unit->log_mem_pool_mgr, rcy_cmd->data_ext);
+                rcy_cmd->data_ext = 0;
+            }
+
+            memory_unit_free(unit->log_cmd_unit, rcy_cmd);
+        }
+        Sleep(10);
+    }
+
+    return true;
+}
+
+void file_log_ex_option(HFILELOGEX log_ex, enum log_level lv, bool open_or_not)
+{
+    if (open_or_not)
+    {
+        log_ex->log_flag = log_ex->log_flag | lv;
+    }
+    else
+    {
+        log_ex->log_flag &= ~lv;
+    }
+}
+
+bool file_log_ex_open_or_not(HFILELOGEX log_ex, enum log_level lv)
+{
+    return ((log_ex->log_flag & lv) != 0);
+}
+
+bool file_log_ex_flush(HFILELOGEX log_ex)
+{
+    log_unit* unit = _get_log_unit(log_ex->log_mgr);
+
+    log_cmd* cmd = 0;
+    log_cmd* rcy_cmd = 0;
+
+    if (loop_cache_pop_data(unit->rcy_que, (char*)&cmd, sizeof(log_cmd*)))
+    {
+        if (cmd->data_ext)
+        {
+            memory_manager_free(unit->log_mem_pool_mgr, cmd->data_ext);
+            cmd->data_ext = 0;
+        }
+    }
+    else
+    {
+        cmd = memory_unit_alloc(unit->log_cmd_unit, 4096);
+        cmd->data_ext = 0;
+    }
+
+    cmd->ext_log = log_ex;
+    cmd->data_len = 0;
+
+    cmd->cmd = LOG_CMD_FLUSH;
+
+    while (!loop_cache_push_data(unit->cmd_que, (char*)&cmd, sizeof(log_cmd*)))
+    {
+        if (loop_cache_pop_data(unit->rcy_que, (char*)&rcy_cmd, sizeof(log_cmd*)))
+        {
+            if (rcy_cmd->data_ext)
+            {
+                memory_manager_free(unit->log_mem_pool_mgr, rcy_cmd->data_ext);
+                rcy_cmd->data_ext = 0;
+            }
+
+            memory_unit_free(unit->log_cmd_unit, rcy_cmd);
+        }
+        Sleep(10);
+    }
+
+    return true;
+}
+

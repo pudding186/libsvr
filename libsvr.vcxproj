@@ -201,6 +201,11 @@
     <ClCompile Include="src\utility.cpp">
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Default</CompileAs>
     </ClCompile>
+    <ClCompile Include="src\web_socket.c">
+      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">CompileAsC</CompileAs>
+      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsC</CompileAs>
+      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CompileAsC</CompileAs>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\avl_tree.h" />
@@ -221,6 +226,7 @@
     <ClInclude Include="include\timer.h" />
     <ClInclude Include="include\type_def.h" />
     <ClInclude Include="include\utility.hpp" />
+    <ClInclude Include="include\web_socket.h" />
     <ClInclude Include="src\data_def.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
